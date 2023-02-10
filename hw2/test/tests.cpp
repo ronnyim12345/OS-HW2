@@ -5,11 +5,10 @@
 #include "../include/processing_scheduling.h"
 
 // Using a C library requires extern "C" to prevent function managling
-extern "C" 
+extern "C"
 {
 #include <dyn_array.h>
 }
-
 
 #define NUM_PCB 30
 #define QUANTUM 5 // Used for Robin Round for process as the run time limit
@@ -17,31 +16,51 @@ extern "C"
 unsigned int score;
 unsigned int total;
 
-class GradeEnvironment : public testing::Environment 
+class GradeEnvironment : public testing::Environment
 {
-    public:
-        virtual void SetUp() 
-        {
-            score = 0;
-            total = 210;
-        }
+public:
+    virtual void SetUp()
+    {
+        score = 0;
+        total = 210;
+    }
 
-        virtual void TearDown()
-        {
-            ::testing::Test::RecordProperty("points_given", score);
-            ::testing::Test::RecordProperty("points_total", total);
-            std::cout << "SCORE: " << score << '/' << total << std::endl;
-        }
+    virtual void TearDown()
+    {
+        ::testing::Test::RecordProperty("points_given", score);
+        ::testing::Test::RecordProperty("points_total", total);
+        std::cout << "SCORE: " << score << '/' << total << std::endl;
+    }
 };
 
 TEST(first_come_first_serve, NullParams)
 {
     bool ret = first_come_first_serve(NULL, NULL);
-    bool expected = false; 
+    bool expected = false;
     EXPECT_EQ(expected, ret);
     if (ret == expected)
         score += 10;
 }
+
+TEST(first_come_first_serve, NullReadyQueue)
+{
+    ScheduleResult_t result;
+    bool ret = first_come_first_serve(NULL, &result);
+    bool expected = false;
+    EXPECT_EQ(expected, ret);
+    if (ret == expected)
+        score += 10;
+}
+
+// TEST(first_come_first_serve, NullResult)
+// {
+//     dyn_array_t ready_queue;
+//     bool ret = first_come_first_serve(&ready_queue, NULL);
+//     bool expected = false;
+//     EXPECT_EQ(expected, ret);
+//     if (ret == expected)
+//         score += 10;
+// }
 
 // TEST (first_come_first_serve, EmptyQueue)
 // {
@@ -133,7 +152,6 @@ TEST(first_come_first_serve, NullParams)
 //     score += 10;
 // }
 
-
 // TEST (shortest_job_first, MultipleProcesses)
 // {
 //     dyn_array_t *queue = dyn_array_create(0, sizeof(pcb_t), NULL);
@@ -176,7 +194,6 @@ TEST(first_come_first_serve, NullParams)
 //     score += 10;
 // }
 
-
 // TEST (round_robin, NullParameter)
 // {
 //     EXPECT_EQ(0, round_robin(NULL, 1));
@@ -204,7 +221,6 @@ TEST(first_come_first_serve, NullParams)
 //     score += 10;
 // }
 
-
 // TEST (round_robin, MultipleProcesses)
 // {
 //     dyn_array_t *queue = dyn_array_create(0, sizeof(pcb_t), NULL);
@@ -225,7 +241,6 @@ TEST(first_come_first_serve, NullParams)
 //     dyn_array_destroy(queue);
 //     score += 10;
 // }
-
 
 // TEST (round_robin, MultipleProcessesWithArrivalTime)
 // {
@@ -269,8 +284,7 @@ TEST(first_come_first_serve, NullParams)
 //     score += 10;
 // }
 
-
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
     ::testing::AddGlobalTestEnvironment(new GradeEnvironment);

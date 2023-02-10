@@ -39,7 +39,8 @@ bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result)
     ProcessControlBlock_t *pcb = NULL;
     int turnaround_time = 0;
     int waiting_time = 0;
-    // int response_time = 0;
+
+    //NOTE: We could optimize this algorithm by using qsort but I am unsure if we are allowed to use it
 
     // loop through the ready queue
     for(i = 0; i < size; i++)
@@ -83,26 +84,202 @@ bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result)
 
 }
 
+/*
+* shortest_job_first
+* Runs the Shortest Job First Scheduling algorithm over the incoming ready_queue
+* @param ready queue a dyn_array of type ProcessControlBlock_t that contain be up to N elements
+* @param result used for shortest job first stat tracking \ref ScheduleResult_t
+* @return true if function ran successful else false for an error
+*/
 bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result) 
 {
-    UNUSED(ready_queue);
-    UNUSED(result);
-    return false;   
+    //check for bad params
+    if (ready_queue == NULL || result == NULL)
+    {
+        return false;
+    }
+
+    // initialize variables
+    int i = 0;
+    int size = dyn_array_size(ready_queue);
+    ProcessControlBlock_t *pcb = NULL;
+    int turnaround_time = 0;
+    int waiting_time = 0;
+    int response_time = 0;
+
+    // loop through the ready queue
+    for (i = 0; i < size; i++)
+    {
+        // get the pcb
+        pcb = dyn_array_at(ready_queue, i);
+
+        // check for bad pcb
+        if (pcb == NULL)
+        {
+            return false;
+        }
+
+        // set the response time for the first process
+        if (i == 0)
+        {
+            response_time = pcb->arrival;
+        }
+        else
+        {
+            // calculate the waiting time for each process
+            waiting_time = waiting_time + (turnaround_time - pcb->arrival);
+        }
+
+        // run the virtual cpu
+        virtual_cpu(pcb);
+
+        // check if the pcb is done
+        if (pcb->remaining_burst_time == 0)
+        {
+            turnaround_time = turnaround_time + pcb->arrival + pcb->remaining_burst_time;
+        }
+    }
+
+    // update the schedule result with the calculated values
+    result->average_waiting_time = (float) waiting_time / size;
+    result->average_turnaround_time = (float) turnaround_time / size;
+    result->total_run_time = turnaround_time;
+
+    return true;
 }
 
+
+/*
+* priority
+*  Runs the Priority Scheduling algorithm over the incoming ready_queue
+*  @param ready queue a dyn_array of type ProcessControlBlock_t that contain be up to N elements
+*  @param result used for priority stat tracking \ref ScheduleResult_t
+*  @return true if function ran successful else false for an error
+*/
 bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result) 
 {
-    UNUSED(ready_queue);
-    UNUSED(result);
-    return false;   
+    //check for bad params
+    if (ready_queue == NULL || result == NULL)
+    {
+        return false;
+    }
+
+    // initialize variables
+    int i = 0;
+    int size = dyn_array_size(ready_queue);
+    ProcessControlBlock_t *pcb = NULL;
+    int turnaround_time = 0;
+    int waiting_time = 0;
+    int response_time = 0;
+
+    // loop through the ready queue
+    for (i = 0; i < size; i++)
+    {
+        // get the pcb
+        pcb = dyn_array_at(ready_queue, i);
+
+        // check for bad pcb
+        if (pcb == NULL)
+        {
+            return false;
+        }
+
+        // set the response time for the first process
+        if (i == 0)
+        {
+            response_time = pcb->arrival;
+        }
+        else
+        {
+            // calculate the waiting time for each process
+            waiting_time = waiting_time + (turnaround_time - pcb->arrival);
+        }
+
+        // run the virtual cpu
+        virtual_cpu(pcb);
+
+        // check if the pcb is done
+        if (pcb->remaining_burst_time == 0)
+        {
+            turnaround_time = turnaround_time + pcb->arrival + pcb->remaining_burst_time;
+        }
+    }
+
+    // update the schedule result with the calculated values
+    result->average_waiting_time = (float) waiting_time / size;
+    result->average_turnaround_time = (float) turnaround_time / size;
+    result->total_run_time = turnaround_time;
+
+    return true;
 }
 
+/*
+* round_robin
+*  Runs the Round Robin Scheduling algorithm over the incoming ready_queue
+*  @param ready queue a dyn_array of type ProcessControlBlock_t that contain be up to N elements
+*  @param result used for round robin stat tracking \ref ScheduleResult_t
+*  @param quantum the time slice for the round robin algorithm
+*  @return true if function ran successful else false for an error
+*/
 bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quantum) 
 {
-    UNUSED(ready_queue);
-    UNUSED(result);
-    UNUSED(quantum);
-    return false;
+   // check for bad params
+    if (ready_queue == NULL || result == NULL || quantum == 0)
+    {
+         return false;
+    }
+
+    // initialize variables
+    int i = 0;
+    int size = dyn_array_size(ready_queue);
+    ProcessControlBlock_t *pcb = NULL;
+    int turnaround_time = 0;
+    int waiting_time = 0;
+    int response_time = 0;
+
+    // loop through the ready queue
+    for (i = 0; i < size; i++)
+    {
+        // get the pcb
+        pcb = dyn_array_at(ready_queue, i);
+
+        // check for bad pcb
+        if (pcb == NULL)
+        {
+            return false;
+        }
+
+        if (pcb->remaining_burst_time > 0) {
+
+        // set the response time for the first process
+        if (response_time == 0)
+        {
+            response_time = pcb->arrival;
+        }
+        else
+        {
+           response_time += turnaround_time - pcb->arrival;
+        }
+
+        // run the virtual CPU for quantum amount of time
+        int burst = pcb->remaining_burst_time > quantum ? quantum : pcb->remaining_burst_time;
+        // run the virtual cpu
+        virtual_cpu(pcb);
+        // update the remaining burst time
+        pcb->remaining_burst_time -= burst;
+
+        // accumulate turnaround time and waiting time
+        turnaround_time += burst;
+        waiting_time += turnaround_time - pcb->arrival - burst;
+        }
+    }
+
+    // update the schedule result with the calculated values
+    result->average_waiting_time = (float) waiting_time / size;
+    result->average_turnaround_time = (float) turnaround_time / size;
+    result->total_run_time = turnaround_time;
+
+    return true;
 }
 /* 
 * load_process_control_blocks
@@ -181,9 +358,63 @@ dyn_array_t *load_process_control_blocks(const char *input_file)
     return pcb_array;
 }
 
+/*
+* shortest_remaining_time_first
+*  Runs the Shortest Remaining Time First Scheduling algorithm over the incoming ready_queue
+*  @param ready queue a dyn_array of type ProcessControlBlock_t that contain be up to N elements
+*  @param result used for shortest remaining time first stat tracking \ref ScheduleResult_t
+*  @return true if function ran successful else false for an error
+*/
 bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *result) 
 {
-    UNUSED(ready_queue);
-    UNUSED(result);
-    return false;
+    //check for bad params
+    if (ready_queue == NULL || result == NULL)
+    {
+        return false;
+    }
+
+    // initialize variables
+    int i = 0;
+    int size = dyn_array_size(ready_queue);
+    ProcessControlBlock_t *pcb = NULL;
+    int turnaround_time = 0;
+    int waiting_time = 0;
+    int response_time = 0;
+
+    // loop through the ready queue
+    for (i = 0; i < size; i++)
+    {
+        // get the pcb
+        pcb = dyn_array_at(ready_queue, i);
+
+        // check for bad pcb
+        if (pcb == NULL)
+        {
+            return false;
+        }
+
+        // set the response time for the first process
+        if (response_time == 0)
+        {
+            response_time = pcb->arrival;
+        }
+        else
+        {
+            response_time += turnaround_time - pcb->arrival;
+        }
+
+        // run the virtual cpu
+        virtual_cpu(pcb);
+
+        // accumulate turnaround time and waiting time
+        turnaround_time += pcb->remaining_burst_time;
+        waiting_time += turnaround_time - pcb->arrival - pcb->remaining_burst_time;
+    }
+
+    // update the schedule result with the calculated values
+    result->average_waiting_time = (float) waiting_time / size;
+    result->average_turnaround_time = (float) turnaround_time / size;
+    result->total_run_time = turnaround_time;
+
+    return true;
 }
