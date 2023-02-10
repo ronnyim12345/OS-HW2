@@ -16,35 +16,20 @@ set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -Wshadow -Werror")
 # THIS IS REQUIRED
 include_directories(include)
 
-
-
 # Create library from dyn_array so we can use it later.
-
-
-
-add_library(dyn_array STATIC ${CMAKE_CURRENT_SOURCE_DIR}/src/dyn_array.c)
-
-
-
-
+add_library(dyn_array src/dyn_array.c)
 
 # Compile the analysis executable.
-add_executable(analysis ${CMAKE_CURRENT_SOURCE_DIR}/src/analysis.c)
-
-
+add_executable(analysis src/analysis.c)
 
 
 # link the dyn_array library we compiled against our analysis executable.
-target_link_libraries(analysis PUBLIC dyn_array)
-
-
-
-
+target_link_libraries(analysis dyn_array)
 
 # Compile the the tester executable.
-add_executable(${PROJECT_NAME}_test ${CMAKE_CURRENT_SOURCE_DIR}/test/tests.cpp src/process_scheduling.c)
-target_compile_definitions(${PROJECT_NAME}_test PRIVATE)
+add_executable(${PROJECT_NAME}_test test/tests.cpp src/dyn_array.c src/analysis.c)
 
+target_compile_definitions(${PROJECT_NAME}_test PRIVATE)
 
 # Link ${PROJECT_NAME}_test with dyn_array and gtest and pthread libraries
 target_link_libraries(${PROJECT_NAME}_test gtest pthread dyn_array)
