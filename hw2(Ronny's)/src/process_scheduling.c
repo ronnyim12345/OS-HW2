@@ -61,7 +61,7 @@ bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result)
             dyn_array_extract(d, i+1, ex);
             dyn_array_insert(d, i, ex);
             
-            i = 0;
+            i = -1;
         }
     }
     
