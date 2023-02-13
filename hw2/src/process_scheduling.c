@@ -105,7 +105,6 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
     ProcessControlBlock_t *pcb = NULL;
     int turnaround_time = 0;
     int waiting_time = 0;
-    int response_time = 0;
 
     // loop through the ready queue
     for (i = 0; i < size; i++)
@@ -119,14 +118,9 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
             return false;
         }
 
-        // set the response time for the first process
-        if (i == 0)
+        // calculate the waiting time for each process
+        if (i > 0)
         {
-            response_time = pcb->arrival;
-        }
-        else
-        {
-            // calculate the waiting time for each process
             waiting_time = waiting_time + (turnaround_time - pcb->arrival);
         }
 
@@ -170,7 +164,6 @@ bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result)
     ProcessControlBlock_t *pcb = NULL;
     int turnaround_time = 0;
     int waiting_time = 0;
-    int response_time = 0;
 
     // loop through the ready queue
     for (i = 0; i < size; i++)
@@ -184,16 +177,8 @@ bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result)
             return false;
         }
 
-        // set the response time for the first process
-        if (i == 0)
-        {
-            response_time = pcb->arrival;
-        }
-        else
-        {
-            // calculate the waiting time for each process
-            waiting_time = waiting_time + (turnaround_time - pcb->arrival);
-        }
+        // calculate the waiting time for each process
+        waiting_time = waiting_time + (turnaround_time - pcb->arrival);
 
         // run the virtual cpu
         virtual_cpu(pcb);
@@ -212,6 +197,7 @@ bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result)
 
     return true;
 }
+
 
 /*
 * round_robin
@@ -329,6 +315,9 @@ dyn_array_t *load_process_control_blocks(const char *input_file)
     {
         return NULL;
     }
+
+    //set up variable for the first data in the pcb
+    int arrival = 0;
 
     // loop through the file
     for (i = 0; i < size; i++)

@@ -21,7 +21,6 @@ include_directories(include)
 # Create library from dyn_array so we can use it later.
 
 
-
 add_library(dyn_array STATIC ${CMAKE_CURRENT_SOURCE_DIR}/src/dyn_array.c)
 
 
@@ -48,3 +47,7 @@ target_compile_definitions(${PROJECT_NAME}_test PRIVATE)
 
 # Link ${PROJECT_NAME}_test with dyn_array and gtest and pthread libraries
 target_link_libraries(${PROJECT_NAME}_test gtest pthread dyn_array)
+
+
+# Add pcb.bin
+file(COPY test/pcb.bin DESTINATION .)
