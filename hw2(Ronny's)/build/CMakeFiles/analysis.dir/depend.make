@@ -4,4 +4,6 @@
 CMakeFiles/analysis.dir/src/analysis.c.o: ../include/dyn_array.h
 CMakeFiles/analysis.dir/src/analysis.c.o: ../include/processing_scheduling.h
 CMakeFiles/analysis.dir/src/analysis.c.o: ../src/analysis.c
+CMakeFiles/analysis.dir/src/analysis.c.o: ../src/dyn_array.c
+CMakeFiles/analysis.dir/src/analysis.c.o: ../src/process_scheduling.c
 
