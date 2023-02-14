@@ -308,14 +308,14 @@ TEST(shortest_remaining_time_first, GoodWorking)
     ScheduleResult_t *r = (ScheduleResult_t*)malloc(sizeof(ScheduleResult_t));
     shortest_remaining_time_first(d, r);
     
-    EXPECT_EQ(13.25, r->average_waiting_time);
-    EXPECT_EQ(25.75, r->average_turnaround_time);
+    EXPECT_EQ(11.75, r->average_waiting_time);
+    EXPECT_EQ(24.25, r->average_turnaround_time);
     EXPECT_EQ(50, (int)r->total_run_time);
     
-    if (13.25 == r->average_waiting_time)
+    if (11.75 == r->average_waiting_time)
         score += 10;
         
-    if (25.75 == r->average_turnaround_time)
+    if (24.25 == r->average_turnaround_time)
         score += 10;
         
     if (50 == (int)r->total_run_time)

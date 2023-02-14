@@ -273,7 +273,7 @@ bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result)
         p1 = dyn_array_at(d, i);
         p2 = dyn_array_at(d, i+1);
         
-        if(p1->priority < p2->priority){
+        if(p1->priority > p2->priority){
             dyn_array_extract(d, i+1, ex);
             dyn_array_insert(d, i, ex);
             
@@ -382,7 +382,7 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
         p1 = dyn_array_at(d, i);
         p2 = dyn_array_at(d, i+1);
         
-        if(p1->arrival < p2->arrival){
+        if(p1->arrival > p2->arrival){
             dyn_array_extract(d, i+1, ex);
             dyn_array_insert(d, i, ex);
             
@@ -710,6 +710,22 @@ bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *r
         
         burst_time[i] += burst_timer;
     }
+    
+    
+    
+    
+     for(int i=0; i < s; i++){
+         
+         p1 = dyn_array_at(d, i);
+         
+         waiting_time[i] -= p1->arrival;
+         
+         
+     }
+    
+    
+    
+    
     
     
     //CREATE AVERAGE WAITING TIME VARIABLE
