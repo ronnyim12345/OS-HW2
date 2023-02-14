@@ -27,7 +27,8 @@ void virtual_cpu(ProcessControlBlock_t *process_control_block)
 */
 bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result) 
 {
-// check for bad parameters
+
+       // check for bad parameters
     if(ready_queue == NULL || result == NULL)
     {
         return false;
@@ -39,8 +40,8 @@ bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result)
     ProcessControlBlock_t *pcb = NULL;
     int turnaround_time = 0;
     int waiting_time = 0;
-
-    //NOTE: We could optimize this algorithm by using qsort but I am unsure if we are allowed to use it
+    int total_burst_time = 0;
+    int burst_time = 0;
 
     // loop through the ready queue
     for(i = 0; i < size; i++)
@@ -54,31 +55,26 @@ bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result)
             return false;
         }
 
-        // set the response time for the first process
-        if (i == 0)
-        {
-            // response_time = pcb->arrival;
-        }
-        else
-        {
-            // calculate the waiting time for each process
-            waiting_time = waiting_time + (turnaround_time - pcb->arrival);
-        }
+        burst_time = pcb->remaining_burst_time;
 
         // run the virtual cpu
         virtual_cpu(pcb);
-        
-        // check if the pcb is done
-        if(pcb->remaining_burst_time == 0)
+
+        // calculate the waiting time for each process
+        if (i > 0)
         {
-            turnaround_time = turnaround_time + pcb->arrival + pcb->remaining_burst_time;
+            waiting_time = waiting_time + (turnaround_time - pcb->arrival - burst_time);
         }
+
+        // calculate the turnaround time for each process
+        turnaround_time = turnaround_time + burst_time;
+        total_burst_time = total_burst_time + burst_time;
     }
 
     // update the schedule result with the calculated values
     result->average_waiting_time = (float) waiting_time / size;
     result->average_turnaround_time = (float) turnaround_time / size;
-    result->total_run_time = turnaround_time;
+    result->total_run_time = total_burst_time;
 
     return true;
 
@@ -316,8 +312,6 @@ dyn_array_t *load_process_control_blocks(const char *input_file)
         return NULL;
     }
 
-    //set up variable for the first data in the pcb
-    int arrival = 0;
 
     // loop through the file
     for (i = 0; i < size; i++)
