@@ -43,8 +43,8 @@ bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result)
     
     
     //TRAVELING POINTERS
-    ProcessControlBlock_t *p1 = malloc(sizeof(ProcessControlBlock_t));
-    ProcessControlBlock_t *p2 = malloc(sizeof(ProcessControlBlock_t));
+    ProcessControlBlock_t *p1;
+    ProcessControlBlock_t *p2;
     
     
     //EXTRACTION HOLDER
@@ -81,7 +81,7 @@ bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result)
     
     
     //TRAVELING POINTER
-    ProcessControlBlock_t *p = malloc(sizeof(ProcessControlBlock_t));
+    ProcessControlBlock_t *p;
     
     
     //PERFORMS CPU SCHEDULING FOR ALL DATA
@@ -99,6 +99,13 @@ bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result)
         }
         
         burst_time[i] = burst_timer;
+    }
+    
+    
+    //SUBTRACTS ARRIVAL TIMES FROM WAITING TIMES
+    for(int i=0; i < s; i++){
+        p1 = dyn_array_at(d, i);
+        waiting_time[i] -= p1->arrival;
     }
     
     
@@ -133,6 +140,9 @@ bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result)
     result->average_waiting_time = average_waiting_time;     
     result->average_turnaround_time = average_turnaround_time;  
     result->total_run_time = universal_timer; 
+    
+    
+    free(ex);
     
     
     return true;
@@ -148,35 +158,56 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
     //MAKE CUSTOM VARIABLES
     dyn_array_t *d = ready_queue;
     int s = ready_queue->size;
+    int s_initial = ready_queue->size;
     
     
     //TRAVELING POINTERS
-    ProcessControlBlock_t *p1 = malloc(sizeof(ProcessControlBlock_t));
-    ProcessControlBlock_t *p2 = malloc(sizeof(ProcessControlBlock_t));
+    ProcessControlBlock_t *p1;
+    ProcessControlBlock_t *p2;
+    
+    
+    //TRAVELING POINTER
+    ProcessControlBlock_t *p;
     
     
     //EXTRACTION HOLDER
     ProcessControlBlock_t *ex = malloc(sizeof(ProcessControlBlock_t));
     
     
-    //THIS SORTS ALL THE DATA IN ORDER OF BURST TIME
+    //THIS SORTS ALL THE DATA IN ORDER OF ARRIVAL TIME, THEN BURST
     for(int i=0; i < s-1; i++){
         
         p1 = dyn_array_at(d, i);
         p2 = dyn_array_at(d, i+1);
         
-        if(p1->remaining_burst_time > p2->remaining_burst_time){
+        if(p1->arrival > p2->arrival){
             dyn_array_extract(d, i+1, ex);
             dyn_array_insert(d, i, ex);
             
             i = -1;
         }
+        else if(p1->arrival == p2->arrival){
+            
+            if(p1->remaining_burst_time > p2->remaining_burst_time){
+                dyn_array_extract(d, i+1, ex);
+                dyn_array_insert(d, i, ex);
+                
+                i = -1;
+            }
+            
+        }
+    }
+    
+    
+    //SETS UP ALL ID NUMBERS
+    for(int i=0; i < s; i++){
+        p = dyn_array_at(d, i);
+        p->ID = i;
     }
     
     
     //TIMER VARIABLES
     float universal_timer = 0;
-    float burst_timer = 0;
     float waiting_time[s];
     float burst_time[s];
     
@@ -188,25 +219,72 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
     }
     
     
-    //TRAVELING POINTER
-    ProcessControlBlock_t *p = malloc(sizeof(ProcessControlBlock_t));
-    
-    
-    //PERFORMS CPU SCHEDULING FOR ALL DATA
+    //SUBTRACTS ARRIVAL TIMES FROM WAITING TIMES
     for(int i=0; i < s; i++){
+        p1 = dyn_array_at(d, i);
+        waiting_time[i] -= p1->arrival;
+    }
+    
+    
+    //CPU SCHEDULES THE FIRST ONE (HAPPENS REGARDLESS)
+    p = dyn_array_at(d, 0);
+    
+    while(p->remaining_burst_time != 0){
+        virtual_cpu(p);
+        universal_timer++;
+        burst_time[p->ID]++;
+    }
+    
+    
+    //REMOVES IT FROM THE DYN ARRAY
+    dyn_array_extract(d, 0, ex);
+    
+    
+    //STORE THE NEW SIZE
+    s = ready_queue->size;
+    
+    
+    //THIS SORTS ALL THE DATA IN ORDER OF BURST
+    for(int i=0; i < s-1; i++){
         
-        p = dyn_array_at(d, i);
+        p1 = dyn_array_at(d, i);
+        p2 = dyn_array_at(d, i+1);
         
-        waiting_time[i] = universal_timer;
-        burst_timer = 0;
-        
-        while(p->remaining_burst_time != 0){
-            virtual_cpu(p);
-            universal_timer++;
-            burst_timer++;
+        if(p1->remaining_burst_time > p2->remaining_burst_time){
+            dyn_array_extract(d, i+1, ex);
+            dyn_array_insert(d, i, ex);
+            
+            i = -1;
         }
         
-        burst_time[i] = burst_timer;
+    }
+
+    
+    //CPU SCHEDULES THE REST OF THE DATA
+    while(s != 0){
+        
+        //PERFORMS THE NEXT CPU SCHEDULING BY BURST
+        for(int i=0; i < s; i++){
+            p = dyn_array_at(d, i);
+            
+            if(p->arrival <= universal_timer){
+                
+                waiting_time[p->ID] += universal_timer;
+                
+                while(p->remaining_burst_time != 0){
+                    virtual_cpu(p);
+                    universal_timer++;
+                    burst_time[p->ID]++;
+                }
+                
+                dyn_array_extract(d, i, ex);
+                s = ready_queue->size;        //store the new size
+                
+                i = s;
+            }
+            
+        }
+    
     }
     
     
@@ -215,13 +293,13 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
    
    
     //CALCULATE AVERAGE WAITING TIME
-    for(int i=0; i < s; i++){
+    for(int i=0; i < s_initial; i++){
         average_waiting_time += waiting_time[i];
     }
     
     
     //CALCULATE AVERAGE WAITING TIME
-    average_waiting_time /= s;
+    average_waiting_time /= s_initial;
     
     
     //CREATE AVERAGE TURNAROUND TIME VARIABLE
@@ -229,12 +307,12 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
     
     
     //CALCULATE AVERAGE TURNAROUND TIME
-    for(int i=0; i < s; i++){
+    for(int i=0; i < s_initial; i++){
         average_turnaround_time += waiting_time[i]+burst_time[i];
     }
     
     //CALCULATE AVERAGE TURNAROUND TIME
-    average_turnaround_time /= s;
+    average_turnaround_time /= s_initial;
     
     
     //STORE ALL THE RESULTS
@@ -243,7 +321,11 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
     result->total_run_time = universal_timer; 
     
     
-    return true;
+    
+    free(ex);
+    
+    
+    return true; 
 }
 
 bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result) 
@@ -256,15 +338,90 @@ bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result)
     //MAKE CUSTOM VARIABLES
     dyn_array_t *d = ready_queue;
     int s = ready_queue->size;
+    int s_initial = ready_queue->size;
     
     
     //TRAVELING POINTERS
-    ProcessControlBlock_t *p1 = malloc(sizeof(ProcessControlBlock_t));
-    ProcessControlBlock_t *p2 = malloc(sizeof(ProcessControlBlock_t));
+    ProcessControlBlock_t *p1;
+    ProcessControlBlock_t *p2;
+    
+    
+    //TRAVELING POINTER
+    ProcessControlBlock_t *p;
     
     
     //EXTRACTION HOLDER
     ProcessControlBlock_t *ex = malloc(sizeof(ProcessControlBlock_t));
+    
+    
+    //THIS SORTS ALL THE DATA IN ORDER OF ARRIVAL TIME, THEN PRIORITY
+    for(int i=0; i < s-1; i++){
+        
+        p1 = dyn_array_at(d, i);
+        p2 = dyn_array_at(d, i+1);
+        
+        if(p1->arrival > p2->arrival){
+            dyn_array_extract(d, i+1, ex);
+            dyn_array_insert(d, i, ex);
+            
+            i = -1;
+        }
+        else if(p1->arrival == p2->arrival){
+            
+            if(p1->priority > p2->priority){
+                dyn_array_extract(d, i+1, ex);
+                dyn_array_insert(d, i, ex);
+                
+                i = -1;
+            }
+            
+        }
+    }
+    
+    
+    //SETS UP ALL ID NUMBERS
+    for(int i=0; i < s; i++){
+        p = dyn_array_at(d, i);
+        p->ID = i;
+    }
+    
+    
+    //TIMER VARIABLES
+    float universal_timer = 0;
+    float waiting_time[s];
+    float burst_time[s];
+    
+    
+    //SET ALL EQUAL TO ZERO
+    for(int i=0; i < s; i++){
+        waiting_time[i] = 0;
+        burst_time[i] = 0;
+    }
+    
+    
+    //SUBTRACTS ARRIVAL TIMES FROM WAITING TIMES
+    for(int i=0; i < s; i++){
+        p1 = dyn_array_at(d, i);
+        waiting_time[i] -= p1->arrival;
+    }
+    
+    
+    //CPU SCHEDULES THE FIRST ONE (HAPPENS REGARDLESS)
+    p = dyn_array_at(d, 0);
+    
+    while(p->remaining_burst_time != 0){
+        virtual_cpu(p);
+        universal_timer++;
+        burst_time[p->ID]++;
+    }
+    
+    
+    //REMOVES IT FROM THE DYN ARRAY
+    dyn_array_extract(d, 0, ex);
+    
+    
+    //STORE THE NEW SIZE
+    s = ready_queue->size;
     
     
     //THIS SORTS ALL THE DATA IN ORDER OF PRIORITY
@@ -279,42 +436,35 @@ bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result)
             
             i = -1;
         }
+        
     }
+
     
-    
-    //TIMER VARIABLES
-    float universal_timer = 0;
-    float burst_timer = 0;
-    float waiting_time[s];
-    float burst_time[s];
-    
-    
-    //SET ALL EQUAL TO ZERO
-    for(int i=0; i < s; i++){
-        waiting_time[i] = 0;
-        burst_time[i] = 0;
-    }
-    
-    
-    //TRAVELING POINTER
-    ProcessControlBlock_t *p = malloc(sizeof(ProcessControlBlock_t));
-    
-    
-    //PERFORMS CPU SCHEDULING FOR ALL DATA
-    for(int i=0; i < s; i++){
+    //CPU SCHEDULES THE REST OF THE DATA
+    while(s != 0){
         
-        p = dyn_array_at(d, i);
-        
-        waiting_time[i] = universal_timer;
-        burst_timer = 0;
-        
-        while(p->remaining_burst_time != 0){
-            virtual_cpu(p);
-            universal_timer++;
-            burst_timer++;
+        //PERFORMS THE NEXT CPU SCHEDULING BY PRIORITY
+        for(int i=0; i < s; i++){
+            p = dyn_array_at(d, i);
+            
+            if(p->arrival <= universal_timer){
+                
+                waiting_time[p->ID] += universal_timer;
+                
+                while(p->remaining_burst_time != 0){
+                    virtual_cpu(p);
+                    universal_timer++;
+                    burst_time[p->ID]++;
+                }
+                
+                dyn_array_extract(d, i, ex);
+                s = ready_queue->size;        //store the new size
+                
+                i = s;
+            }
+            
         }
-        
-        burst_time[i] = burst_timer;
+    
     }
     
     
@@ -323,13 +473,13 @@ bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result)
    
    
     //CALCULATE AVERAGE WAITING TIME
-    for(int i=0; i < s; i++){
+    for(int i=0; i < s_initial; i++){
         average_waiting_time += waiting_time[i];
     }
     
     
     //CALCULATE AVERAGE WAITING TIME
-    average_waiting_time /= s;
+    average_waiting_time /= s_initial;
     
     
     //CREATE AVERAGE TURNAROUND TIME VARIABLE
@@ -337,18 +487,21 @@ bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result)
     
     
     //CALCULATE AVERAGE TURNAROUND TIME
-    for(int i=0; i < s; i++){
+    for(int i=0; i < s_initial; i++){
         average_turnaround_time += waiting_time[i]+burst_time[i];
     }
     
     //CALCULATE AVERAGE TURNAROUND TIME
-    average_turnaround_time /= s;
+    average_turnaround_time /= s_initial;
     
     
     //STORE ALL THE RESULTS
     result->average_waiting_time = average_waiting_time;     
     result->average_turnaround_time = average_turnaround_time;  
     result->total_run_time = universal_timer; 
+    
+    
+    free(ex);
     
     
     return true; 
@@ -368,8 +521,8 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
     
     
     //TRAVELING POINTERS
-    ProcessControlBlock_t *p1 = malloc(sizeof(ProcessControlBlock_t));
-    ProcessControlBlock_t *p2 = malloc(sizeof(ProcessControlBlock_t));
+    ProcessControlBlock_t *p1;
+    ProcessControlBlock_t *p2;
     
     
     //EXTRACTION HOLDER
@@ -406,7 +559,7 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
     
     
     //TRAVELLING POINTER
-    ProcessControlBlock_t *p = malloc(sizeof(ProcessControlBlock_t));
+    ProcessControlBlock_t *p;
     
     
     //TRAVELLING AND COUNTER VARIABLES
@@ -462,6 +615,13 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
     }
     
     
+    //SUBTRACTS ARRIVAL TIMES FROM WAITING TIMES
+    for(int i=0; i < s; i++){
+        p1 = dyn_array_at(d, i);
+        waiting_time[i] -= p1->arrival;
+    }
+    
+    
     //CREATE AVERAGE WAITING TIME VARIABLE
     float average_waiting_time = 0;
    
@@ -494,6 +654,8 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
     result->average_turnaround_time = average_turnaround_time;  
     result->total_run_time = universal_timer; 
     
+    
+    free(ex);
     
     return true; 
 }
@@ -561,6 +723,10 @@ dyn_array_t *load_process_control_blocks(const char *input_file)
     fclose(fp);
     
     
+    free(first_data);
+    free(data);
+    
+    
     //RETURN THE DYN_ARRAY
     return d;
 }
@@ -572,14 +738,15 @@ bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *r
         return false;
     }
     
+    
     //MAKE CUSTOM VARIABLES
     dyn_array_t *d = ready_queue;
     int s = ready_queue->size;
     
     
     //TRAVELING POINTERS
-    ProcessControlBlock_t *p1 = malloc(sizeof(ProcessControlBlock_t));
-    ProcessControlBlock_t *p2 = malloc(sizeof(ProcessControlBlock_t));
+    ProcessControlBlock_t *p1;
+    ProcessControlBlock_t *p2;
     
     
     //EXTRACTION HOLDER
@@ -596,14 +763,37 @@ bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *r
             dyn_array_extract(d, i+1, ex);
             dyn_array_insert(d, i, ex);
             
-            i = 0;
+            i = -1;
+        }
+        else if(p1->arrival == p2->arrival){
+            
+            if(p1->remaining_burst_time > p2->remaining_burst_time){
+                dyn_array_extract(d, i+1, ex);
+                dyn_array_insert(d, i, ex);
+                
+                i = -1;
+            }
+            
         }
     }
     
     
+    //SETS UP ALL ID NUMBERS
+    for(int i=0; i < s; i++){
+        p1 = dyn_array_at(d, i);
+        p1->ID = i;
+    }
+    
+    
+    //FINDS THE LATEST ARRIVAL TIME
+    p1 = dyn_array_at(d, s-1);
+    uint32_t latest_arrival = p1->arrival;
+    
+    
     //TIMER VARIABLES
-    float universal_timer = 0;
+    float universal_timer = latest_arrival;
     float burst_timer = 0;
+    float waiting_timer = 0;
     float waiting_time[s];
     float burst_time[s];
     
@@ -615,57 +805,54 @@ bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *r
     }
     
     
-    //PROCESSING THE FIRST DATA (HAPPENS REGARDLESS)
+    //THIS SORTS ALL THE DATA IN ORDER OF SHORTEST BURST TIME
+    for(int i=0; i < s-1; i++){
+        
+        p1 = dyn_array_at(d, i);
+        p2 = dyn_array_at(d, i+1);
+        
+        if((p1->remaining_burst_time - p1->arrival) > p2->remaining_burst_time){
+            dyn_array_extract(d, i+1, ex);
+            dyn_array_insert(d, i, ex);
+            
+            i = -1;
+        }
+        
+    }
+    
+    
+    //PROCESSES THE SHORTEST JOB, LASTING UNTIL THE LATEST ARRIVAL TIME
     p1 = dyn_array_at(d, 0);
-    virtual_cpu(p1);
-    universal_timer++;
-    burst_time[0]++;
     
+    for(int i=0; i < (int)(latest_arrival - p1->arrival); i++){
+        virtual_cpu(p1);
+        burst_time[p1->ID]++;
+        waiting_timer++;
+    }
+    
+    
+    //THIS CPU SCHEDULES ALL OF THE DATA UP UNTIL THE LAST ONE ARRIVES
     for(int i=1; i < s; i++){
-        waiting_time[i]++;     
-    }   
-    
-    
-    //THIS PROCESSES THE DATA AS IT COMES IN
-    //this only covers the period of time when data comes in
-    //and stops when the data stops coming in
-    for(int i=1; i<s; i++){
         
         p2 = dyn_array_at(d, i);
         
-        if(p1->remaining_burst_time > p2->remaining_burst_time){
+        if(p2->arrival < p1->arrival){
             
-            virtual_cpu(p2);
-            universal_timer++;
-            burst_time[i]++;
+            for(int j=0; j < (int)(p1->arrival - p2->arrival); j++){
+                virtual_cpu(p2);
+                burst_time[p2->ID]++;
+            }
             
-            for(int j=0; j < s; j++){
-                
-                if(j != (int)p2->arrival){
-                    waiting_time[j]++;     
-                }
-                
-            } 
+            waiting_time[p2->ID] = latest_arrival - p1->arrival;
             
             p1 = p2;
-            
+        
         }
         else{
             
-            virtual_cpu(p1);
-            universal_timer++;
-            burst_time[p1->arrival]++;
-            
-            for(int j=0; j < s; j++){
-                
-                if(j != (int)p1->arrival){
-                    waiting_time[j]++;     
-                }
-                
-            } 
+            waiting_time[p2->ID] = latest_arrival - p2->arrival;
             
         }
-            
     }
     
     
@@ -712,22 +899,6 @@ bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *r
     }
     
     
-    
-    
-     for(int i=0; i < s; i++){
-         
-         p1 = dyn_array_at(d, i);
-         
-         waiting_time[i] -= p1->arrival;
-         
-         
-     }
-    
-    
-    
-    
-    
-    
     //CREATE AVERAGE WAITING TIME VARIABLE
     float average_waiting_time = 0;
    
@@ -759,6 +930,9 @@ bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *r
     result->average_waiting_time = average_waiting_time;     
     result->average_turnaround_time = average_turnaround_time;  
     result->total_run_time = universal_timer; 
+    
+    
+    free(ex);
     
     
     return true;

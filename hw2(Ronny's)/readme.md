@@ -14,47 +14,48 @@ Add your scheduling algorithm analysis below this line in a readable format.
 
 [ronnyim12345@selene build]$ time ./analysis pcb.bin FCFS
 
-Average Waiting Time: 17.50
-Average Turnaround Time: 30.00
+Average Waiting Time: 16.00
+Average Turnaround Time: 28.50
 Total Run Time: 50.00
 
-real    0m0.008s
+real    0m0.007s
 user    0m0.001s
 sys     0m0.006s
 [ronnyim12345@selene build]$ time ./analysis pcb.bin SJF
 
-Average Waiting Time: 12.50
-Average Turnaround Time: 25.00
+Average Waiting Time: 14.75
+Average Turnaround Time: 27.25
 Total Run Time: 50.00
 
-real    0m0.021s
-user    0m0.002s
-sys     0m0.007s
+real    0m0.023s
+user    0m0.001s
+sys     0m0.008s
 [ronnyim12345@selene build]$ time ./analysis pcb.bin P
 
-Average Waiting Time: 17.50
-Average Turnaround Time: 30.00
+Average Waiting Time: 16.00
+Average Turnaround Time: 28.50
 Total Run Time: 50.00
 
 real    0m0.006s
-user    0m0.002s
+user    0m0.001s
 sys     0m0.004s
 [ronnyim12345@selene build]$ time ./analysis pcb.bin RR 5
 
-Average Waiting Time: 21.25
-Average Turnaround Time: 33.75
-Total Run Time: 50.00
-
-real    0m0.006s
-user    0m0.003s
-sys     0m0.003s
-[ronnyim12345@selene build]$ time ./analysis pcb.bin SRTF
-
-Average Waiting Time: 13.25
-Average Turnaround Time: 25.75
+Average Waiting Time: 19.75
+Average Turnaround Time: 32.25
 Total Run Time: 50.00
 
 real    0m0.006s
 user    0m0.001s
 sys     0m0.005s
+[ronnyim12345@selene build]$ time ./analysis pcb.bin SRTF
+
+Average Waiting Time: 11.75
+Average Turnaround Time: 24.25
+Total Run Time: 50.00
+
+real    0m0.024s
+user    0m0.000s
+sys     0m0.009s
+
 

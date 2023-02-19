@@ -38,7 +38,7 @@ class GradeEnvironment : public testing::Environment
         virtual void SetUp() 
         {
             score = 0;
-            total = 230;
+            total = 380;
         }
 
         virtual void TearDown()
@@ -60,6 +60,7 @@ TEST(load_process_control_blocks, NullParams)
     if (d == NULL)
         score += 10;
 
+    free(d);
 }
 
 
@@ -70,21 +71,22 @@ TEST(load_process_control_blocks, FileNotFound)
     if (d == NULL)
         score += 10;
 
+    free(d);
 }
 
 
 TEST(load_process_control_blocks, GoodWorking)
 {
     dyn_array_t *d = load_process_control_blocks("pcb.bin");
-    ProcessControlBlock_t *p = (ProcessControlBlock_t*)malloc(sizeof(ProcessControlBlock_t));
+    ProcessControlBlock_t *p;
     p = (ProcessControlBlock_t*)dyn_array_at(d, 3);
     uint32_t result = 20;
     EXPECT_EQ(result, p->remaining_burst_time);
     if (result == p->remaining_burst_time)
         score += 10;    
+        
+    free(d);
 }
-
-
 
 
 
@@ -104,30 +106,55 @@ TEST(first_come_first_serve, NullParams)
 }
 
 
-TEST(first_come_first_serve, GoodWorking)
+TEST(first_come_first_serve, PcbTest)
 {
     dyn_array_t *d = load_process_control_blocks("pcb.bin");
     ScheduleResult_t *r = (ScheduleResult_t*)malloc(sizeof(ScheduleResult_t));
     first_come_first_serve(d, r);
     
-    EXPECT_EQ(17.5, r->average_waiting_time);
-    EXPECT_EQ(30, r->average_turnaround_time);
+    EXPECT_EQ(16, r->average_waiting_time);
+    EXPECT_EQ(28.5, r->average_turnaround_time);
     EXPECT_EQ(50, (int)r->total_run_time);
     
-    if (17.5 == r->average_waiting_time)
+    if (16 == r->average_waiting_time)
         score += 10;
         
-    if (30 == r->average_turnaround_time)
+    if (28.5 == r->average_turnaround_time)
         score += 10;
         
     if (50 == (int)r->total_run_time)
         score += 10;
-    
-    
+        
+    free(r);
+    free(d);
     
 }
 
 
+
+TEST(first_come_first_serve, TextBookExample)
+{
+    dyn_array_t *d = load_process_control_blocks("FCFS.bin");
+    ScheduleResult_t *r = (ScheduleResult_t*)malloc(sizeof(ScheduleResult_t));
+    first_come_first_serve(d, r);
+    
+    EXPECT_EQ(17, r->average_waiting_time);
+    EXPECT_EQ(27, r->average_turnaround_time);
+    EXPECT_EQ(30, (int)r->total_run_time);
+    
+    if (17 == r->average_waiting_time)
+        score += 10;
+        
+    if (27 == r->average_turnaround_time)
+        score += 10;
+        
+    if (30 == (int)r->total_run_time)
+        score += 10;
+    
+    free(r);
+    free(d);
+    
+}
 
 
 
@@ -150,30 +177,55 @@ TEST(shortest_job_first, NullParams)
 
 
 
-TEST(shortest_job_first, GoodWorking)
+TEST(shortest_job_first, PcbTest)
 {
     dyn_array_t *d = load_process_control_blocks("pcb.bin");
     ScheduleResult_t *r = (ScheduleResult_t*)malloc(sizeof(ScheduleResult_t));
     shortest_job_first(d, r);
     
     
-    EXPECT_EQ(12.5, r->average_waiting_time);
-    EXPECT_EQ(25, r->average_turnaround_time);
+    EXPECT_EQ(14.75, r->average_waiting_time);
+    EXPECT_EQ(27.25, r->average_turnaround_time);
     EXPECT_EQ(50, (int)r->total_run_time);
     
-    if (12.5 == r->average_waiting_time)
+    if (14.75 == r->average_waiting_time)
         score += 10;
         
-    if (25 == r->average_turnaround_time)
+    if (27.25 == r->average_turnaround_time)
         score += 10;
         
     if (50 == (int)r->total_run_time)
         score += 10;
     
-    
+    free(r);
+    free(d);
 }
 
 
+
+TEST(shortest_job_first, TextBookExample)
+{
+    dyn_array_t *d = load_process_control_blocks("SJF.bin");
+    ScheduleResult_t *r = (ScheduleResult_t*)malloc(sizeof(ScheduleResult_t));
+    shortest_job_first(d, r);
+    
+    
+    EXPECT_EQ(7, r->average_waiting_time);
+    EXPECT_EQ(13, r->average_turnaround_time);
+    EXPECT_EQ(24, (int)r->total_run_time);
+    
+    if (7 == r->average_waiting_time)
+        score += 10;
+        
+    if (13 == r->average_turnaround_time)
+        score += 10;
+        
+    if (24 == (int)r->total_run_time)
+        score += 10;
+    
+    free(r);
+    free(d);
+}
 
 
 
@@ -198,7 +250,7 @@ TEST(priority, NullParams)
 
 
 
-TEST(priority, GoodWorking)
+TEST(priority, PcbTest)
 {
     dyn_array_t *d = load_process_control_blocks("pcb.bin");
     
@@ -206,35 +258,51 @@ TEST(priority, GoodWorking)
     
     priority(d, r);
     
-    //ProcessControlBlock_t *p = (ProcessControlBlock_t*)malloc(sizeof(ProcessControlBlock_t));
-    //p = (ProcessControlBlock_t*)dyn_array_at(d, 3);
-    //uint32_t result = 3;
-    //EXPECT_EQ(result, p->arrival);
-    
-    
-    EXPECT_EQ(17.5, r->average_waiting_time);
-    EXPECT_EQ(30, r->average_turnaround_time);
+    EXPECT_EQ(16.0, r->average_waiting_time);
+    EXPECT_EQ(28.5, r->average_turnaround_time);
     EXPECT_EQ(50, (int)r->total_run_time);
     
-    if (17.5 == r->average_waiting_time)
+    if (16.0 == r->average_waiting_time)
         score += 10;
         
-    if (30 == r->average_turnaround_time)
+    if (28.5 == r->average_turnaround_time)
         score += 10;
         
     if (50 == (int)r->total_run_time)
         score += 10;
     
-    
+    free(r);
+    free(d);
 }
 
 
-
-
-
-
-
-
+TEST(priority, TextBookExample)
+{
+    dyn_array_t *d = load_process_control_blocks("P.bin");
+    
+    ScheduleResult_t *r = (ScheduleResult_t*)malloc(sizeof(ScheduleResult_t));
+    
+    priority(d, r);
+    
+    float res = r->average_waiting_time;
+    float ex = 8.2;
+    
+    EXPECT_EQ(ex, res);
+    EXPECT_EQ(12, r->average_turnaround_time);
+    EXPECT_EQ(19, (int)r->total_run_time);
+    
+    if (ex == res)
+        score += 10;
+        
+    if (12 == r->average_turnaround_time)
+        score += 10;
+        
+    if (19 == (int)r->total_run_time)
+        score += 10;
+    
+    free(r);
+    free(d);
+}
 
 
 
@@ -255,26 +323,53 @@ TEST(round_robin, NullParams)
 
 
 
-TEST(round_robin, GoodWorking)
+TEST(round_robin, PcbTest)
 {
     dyn_array_t *d = load_process_control_blocks("pcb.bin");
     ScheduleResult_t *r = (ScheduleResult_t*)malloc(sizeof(ScheduleResult_t));
     round_robin(d, r, 5);
     
-    EXPECT_EQ(21.25, r->average_waiting_time);
-    EXPECT_EQ(33.75, r->average_turnaround_time);
+    EXPECT_EQ(19.75, r->average_waiting_time);
+    EXPECT_EQ(32.25, r->average_turnaround_time);
     EXPECT_EQ(50, (int)r->total_run_time);
     
-    if (21.25 == r->average_waiting_time)
+    if (19.75 == r->average_waiting_time)
         score += 10;
         
-    if (33.75 == r->average_turnaround_time)
+    if (32.25 == r->average_turnaround_time)
         score += 10;
         
     if (50 == (int)r->total_run_time)
         score += 10;
     
+    free(r);
+    free(d);
+}
+
+TEST(round_robin, TextBookExample)
+{
+    dyn_array_t *d = load_process_control_blocks("RR.bin");
+    ScheduleResult_t *r = (ScheduleResult_t*)malloc(sizeof(ScheduleResult_t));
+    round_robin(d, r, 4);
     
+    float res1 = 17;
+    float res2 = 47;
+    
+    EXPECT_EQ(res1/3, r->average_waiting_time);
+    EXPECT_EQ(res2/3, r->average_turnaround_time);
+    EXPECT_EQ(30, (int)r->total_run_time);
+    
+    if (res1/3 == r->average_waiting_time)
+        score += 10;
+        
+    if (res2/3 == r->average_turnaround_time)
+        score += 10;
+        
+    if (30 == (int)r->total_run_time)
+        score += 10;
+    
+    free(r);
+    free(d);
 }
 
 
@@ -283,13 +378,7 @@ TEST(round_robin, GoodWorking)
 
 
 
-
-
-
-
-
-
-// ROUND ROBIN TESTS:
+// SHORTEST REMAINING TIME FIRST TESTS:
 
 TEST(shortest_remaining_time_first, NullParams)
 {
@@ -302,7 +391,7 @@ TEST(shortest_remaining_time_first, NullParams)
 
 
 
-TEST(shortest_remaining_time_first, GoodWorking)
+TEST(shortest_remaining_time_first, PcbTest)
 {
     dyn_array_t *d = load_process_control_blocks("pcb.bin");
     ScheduleResult_t *r = (ScheduleResult_t*)malloc(sizeof(ScheduleResult_t));
@@ -321,11 +410,33 @@ TEST(shortest_remaining_time_first, GoodWorking)
     if (50 == (int)r->total_run_time)
         score += 10;
     
-    
+    free(r);
+    free(d);
 }
 
 
-
+TEST(shortest_remaining_time_first, TextBookExample)
+{
+    dyn_array_t *d = load_process_control_blocks("SRTF.bin");
+    ScheduleResult_t *r = (ScheduleResult_t*)malloc(sizeof(ScheduleResult_t));
+    shortest_remaining_time_first(d, r);
+    
+    EXPECT_EQ(6.5, r->average_waiting_time);
+    EXPECT_EQ(13, r->average_turnaround_time);
+    EXPECT_EQ(26, (int)r->total_run_time);
+    
+    if (6.5 == r->average_waiting_time)
+        score += 10;
+        
+    if (13 == r->average_turnaround_time)
+        score += 10;
+        
+    if (26 == (int)r->total_run_time)
+        score += 10;
+    
+    free(r);
+    free(d);
+}
 
 
 
