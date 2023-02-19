@@ -1,2 +1,0 @@
-/opt/software/software/binutils/2.34-GCCcore-9.3.0/bin/ar qc libdyn_array.a  CMakeFiles/dyn_array.dir/src/dyn_array.c.o
-/opt/software/software/binutils/2.34-GCCcore-9.3.0/bin/ranlib libdyn_array.a

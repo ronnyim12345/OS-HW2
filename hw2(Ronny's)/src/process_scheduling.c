@@ -15,7 +15,13 @@
 #include "dyn_array.c"
 #include "processing_scheduling.h"
 
-
+//==================================================
+//Author: Ronny Im, Matthew Bergquist, Alisha Crow
+//Date: 02/19/2023
+//Class: CIS 520
+//Semester: Spring 2023
+//Assignment: Project 2
+//==================================================
 
 // You might find this handy.  I put it around unused parameters, but you should
 // remove it before you submit. Just allows things to compile initially.
@@ -29,7 +35,13 @@ void virtual_cpu(ProcessControlBlock_t *process_control_block)
 }
 
 
-
+/*
+* first_come_first_serve
+* Runs the First Come First Served Process Scheduling algorithm over the incoming ready_queue
+* @param ready queue a dyn_array of type ProcessControlBlock_t that contain be up to N elements
+* @param result used for first come first served stat tracking \ref ScheduleResult_t
+* @return true if function ran successful else false for an error
+*/
 bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result) 
 {
     //ERROR CHECKING
@@ -38,31 +50,31 @@ bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result)
     }
     
     //MAKE CUSTOM VARIABLES
-    dyn_array_t *d = ready_queue;
-    int s = ready_queue->size;
+    dyn_array_t *d = ready_queue; // DYNAMIC ARRAY
+    int s = ready_queue->size; // SIZE OF DYNAMIC ARRAY
     
     
     //TRAVELING POINTERS
-    ProcessControlBlock_t *p1;
-    ProcessControlBlock_t *p2;
+    ProcessControlBlock_t *p1; // FIRST POINTER
+    ProcessControlBlock_t *p2; // SECOND POINTER
     
     
     //EXTRACTION HOLDER
-    ProcessControlBlock_t *ex = malloc(sizeof(ProcessControlBlock_t));
+    ProcessControlBlock_t *ex = malloc(sizeof(ProcessControlBlock_t)); // EXTRACTION HOLDER
     
     
     //THIS SORTS ALL THE DATA IN ORDER OF ARRIVAL TIME
-    for(int i=0; i < s-1; i++){
+    for(int i=0; i < s-1; i++){ // LOOP THROUGH ALL DATA
         
-        p1 = dyn_array_at(d, i);
-        p2 = dyn_array_at(d, i+1);
+        p1 = dyn_array_at(d, i); // FIRST POINTER
+        p2 = dyn_array_at(d, i+1); // SECOND POINTER
         
-        if(p1->arrival > p2->arrival){
-            dyn_array_extract(d, i+1, ex);
-            dyn_array_insert(d, i, ex);
+        if(p1->arrival > p2->arrival){ // IF FIRST POINTER'S ARRIVAL TIME IS GREATER THAN SECOND POINTER'S ARRIVAL TIME
+            dyn_array_extract(d, i+1, ex); // EXTRACT SECOND POINTER
+            dyn_array_insert(d, i, ex); // INSERT SECOND POINTER BEFORE FIRST POINTER
             
-            i = -1;
-        }
+            i = -1; // RESET LOOP
+        } 
     }
     
     
@@ -74,53 +86,53 @@ bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result)
     
     
     //SET ALL EQUAL TO ZERO
-    for(int i=0; i < s; i++){
-        waiting_time[i] = 0;
-        burst_time[i] = 0;
+    for(int i=0; i < s; i++){ // LOOP THROUGH ALL DATA
+        waiting_time[i] = 0; // SET WAITING TIME TO ZERO
+        burst_time[i] = 0; // SET BURST TIME TO ZERO
     }
     
     
     //TRAVELING POINTER
-    ProcessControlBlock_t *p;
+    ProcessControlBlock_t *p; 
     
     
     //PERFORMS CPU SCHEDULING FOR ALL DATA
-    for(int i=0; i < s; i++){
+    for(int i=0; i < s; i++){ // LOOP THROUGH ALL DATA
         
-        p = dyn_array_at(d, i);
+        p = dyn_array_at(d, i); // TRAVELING POINTER
         
-        waiting_time[i] = universal_timer;
-        burst_timer = 0;
+        waiting_time[i] = universal_timer; // SET WAITING TIME TO UNIVERSAL TIMER
+        burst_timer = 0; // SET BURST TIMER TO ZERO
         
-        while(p->remaining_burst_time != 0){
-            virtual_cpu(p);
-            universal_timer++;
-            burst_timer++;
+        while(p->remaining_burst_time != 0){ // WHILE BURST TIME IS NOT ZERO
+            virtual_cpu(p); // PERFORMS CPU SCHEDULING
+            universal_timer++; // INCREASE UNIVERSAL TIMER
+            burst_timer++; // INCREASE BURST TIMER
         }
         
-        burst_time[i] = burst_timer;
+        burst_time[i] = burst_timer; // SET BURST TIME TO BURST TIMER
     }
     
     
     //SUBTRACTS ARRIVAL TIMES FROM WAITING TIMES
-    for(int i=0; i < s; i++){
-        p1 = dyn_array_at(d, i);
-        waiting_time[i] -= p1->arrival;
+    for(int i=0; i < s; i++){ // LOOP THROUGH ALL DATA
+        p1 = dyn_array_at(d, i); // TRAVELING POINTER
+        waiting_time[i] -= p1->arrival; // SUBTRACTS ARRIVAL TIME FROM WAITING TIME
     }
     
     
     //CREATE AVERAGE WAITING TIME VARIABLE
-    float average_waiting_time = 0;
+    float average_waiting_time = 0; 
    
    
     //CALCULATE AVERAGE WAITING TIME
-    for(int i=0; i < s; i++){
-        average_waiting_time += waiting_time[i];
+    for(int i=0; i < s; i++){ // LOOP THROUGH ALL DATA
+        average_waiting_time += waiting_time[i]; // ADDS WAITING TIME TO AVERAGE WAITING TIME
     }
     
     
     //CALCULATE AVERAGE WAITING TIME
-    average_waiting_time /= s;
+    average_waiting_time /= s; // DIVIDES AVERAGE WAITING TIME BY SIZE OF DYNAMIC ARRAY
     
     
     //CREATE AVERAGE TURNAROUND TIME VARIABLE
@@ -128,26 +140,33 @@ bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result)
     
     
     //CALCULATE AVERAGE TURNAROUND TIME
-    for(int i=0; i < s; i++){
-        average_turnaround_time += waiting_time[i]+burst_time[i];
+    for(int i=0; i < s; i++){ // LOOP THROUGH ALL DATA
+        average_turnaround_time += waiting_time[i]+burst_time[i]; // ADDS WAITING TIME AND BURST TIME TO AVERAGE TURNAROUND TIME
     }
     
     //CALCULATE AVERAGE TURNAROUND TIME
-    average_turnaround_time /= s;
+    average_turnaround_time /= s; // DIVIDES AVERAGE TURNAROUND TIME BY SIZE OF DYNAMIC ARRAY
     
     
     //STORE ALL THE RESULTS
-    result->average_waiting_time = average_waiting_time;     
+    result->average_waiting_time = average_waiting_time;   
     result->average_turnaround_time = average_turnaround_time;  
     result->total_run_time = universal_timer; 
     
     
-    free(ex);
+    free(ex); // FREE EXTRACTION HOLDER
     
     
-    return true;
+    return true; // RETURN TRUE
 }
 
+/*
+* shortest_job_first
+* Runs the Shortest Job First Process Scheduling algorithm over the incoming ready_queue
+* @param ready queue a dyn_array of type ProcessControlBlock_t that contain be up to N elements
+* @param result used for shortest job first stat tracking \ref ScheduleResult_t
+* @return true if function ran successful else false for an error
+*/
 bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result) 
 {
     //ERROR CHECKING
@@ -156,43 +175,43 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
     }
     
     //MAKE CUSTOM VARIABLES
-    dyn_array_t *d = ready_queue;
-    int s = ready_queue->size;
-    int s_initial = ready_queue->size;
+    dyn_array_t *d = ready_queue; // DYNAMIC ARRAY
+    int s = ready_queue->size; // SIZE OF DYNAMIC ARRAY
+    int s_initial = ready_queue->size; // SIZE OF DYNAMIC ARRAY
     
     
     //TRAVELING POINTERS
-    ProcessControlBlock_t *p1;
-    ProcessControlBlock_t *p2;
-    
+    ProcessControlBlock_t *p1; // FIRST POINTER
+    ProcessControlBlock_t *p2; // SECOND POINTER
+     
     
     //TRAVELING POINTER
-    ProcessControlBlock_t *p;
+    ProcessControlBlock_t *p; 
     
     
     //EXTRACTION HOLDER
-    ProcessControlBlock_t *ex = malloc(sizeof(ProcessControlBlock_t));
+    ProcessControlBlock_t *ex = malloc(sizeof(ProcessControlBlock_t)); // EXTRACTION HOLDER
     
     
     //THIS SORTS ALL THE DATA IN ORDER OF ARRIVAL TIME, THEN BURST
-    for(int i=0; i < s-1; i++){
+    for(int i=0; i < s-1; i++){ // LOOP THROUGH ALL DATA
         
-        p1 = dyn_array_at(d, i);
-        p2 = dyn_array_at(d, i+1);
+        p1 = dyn_array_at(d, i); // FIRST POINTER
+        p2 = dyn_array_at(d, i+1); // SECOND POINTER
         
-        if(p1->arrival > p2->arrival){
-            dyn_array_extract(d, i+1, ex);
-            dyn_array_insert(d, i, ex);
+        if(p1->arrival > p2->arrival){ // IF FIRST POINTER'S ARRIVAL TIME IS GREATER THAN SECOND POINTER'S ARRIVAL TIME
+            dyn_array_extract(d, i+1, ex); // EXTRACT SECOND POINTER
+            dyn_array_insert(d, i, ex); // INSERT SECOND POINTER BEFORE FIRST POINTER
             
-            i = -1;
+            i = -1; // RESET LOOP
         }
-        else if(p1->arrival == p2->arrival){
+        else if(p1->arrival == p2->arrival){ // IF FIRST POINTER'S ARRIVAL TIME IS EQUAL TO SECOND POINTER'S ARRIVAL TIME
             
-            if(p1->remaining_burst_time > p2->remaining_burst_time){
-                dyn_array_extract(d, i+1, ex);
-                dyn_array_insert(d, i, ex);
+            if(p1->remaining_burst_time > p2->remaining_burst_time){ // IF FIRST POINTER'S BURST TIME IS GREATER THAN SECOND POINTER'S BURST TIME
+                dyn_array_extract(d, i+1, ex); // EXTRACT SECOND POINTER
+                dyn_array_insert(d, i, ex); // INSERT SECOND POINTER BEFORE FIRST POINTER
                 
-                i = -1;
+                i = -1; // RESET LOOP
             }
             
         }
@@ -200,88 +219,88 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
     
     
     //SETS UP ALL ID NUMBERS
-    for(int i=0; i < s; i++){
-        p = dyn_array_at(d, i);
-        p->ID = i;
+    for(int i=0; i < s; i++){ // LOOP THROUGH ALL DATA
+        p = dyn_array_at(d, i); // TRAVELING POINTER
+        p->ID = i; // SET ID NUMBER
     }
     
     
     //TIMER VARIABLES
-    float universal_timer = 0;
-    float waiting_time[s];
-    float burst_time[s];
+    float universal_timer = 0; // UNIVERSAL TIMER
+    float waiting_time[s]; // WAITING TIME
+    float burst_time[s]; // BURST TIME
     
     
     //SET ALL EQUAL TO ZERO
-    for(int i=0; i < s; i++){
-        waiting_time[i] = 0;
-        burst_time[i] = 0;
+    for(int i=0; i < s; i++){ // LOOP THROUGH ALL DATA
+        waiting_time[i] = 0; // SET WAITING TIME TO ZERO
+        burst_time[i] = 0; // SET BURST TIME TO ZERO
     }
     
     
     //SUBTRACTS ARRIVAL TIMES FROM WAITING TIMES
-    for(int i=0; i < s; i++){
-        p1 = dyn_array_at(d, i);
-        waiting_time[i] -= p1->arrival;
+    for(int i=0; i < s; i++){ // LOOP THROUGH ALL DATA
+        p1 = dyn_array_at(d, i); // TRAVELING POINTER
+        waiting_time[i] -= p1->arrival; // SUBTRACTS ARRIVAL TIME FROM WAITING TIME
     }
     
     
     //CPU SCHEDULES THE FIRST ONE (HAPPENS REGARDLESS)
     p = dyn_array_at(d, 0);
     
-    while(p->remaining_burst_time != 0){
-        virtual_cpu(p);
-        universal_timer++;
-        burst_time[p->ID]++;
+    while(p->remaining_burst_time != 0){ // LOOP UNTIL BURST TIME IS ZERO
+        virtual_cpu(p); // PERFORMS VIRTUAL CPU
+        universal_timer++; // INCREASES UNIVERSAL TIMER
+        burst_time[p->ID]++; // INCREASES BURST TIME
     }
     
     
     //REMOVES IT FROM THE DYN ARRAY
-    dyn_array_extract(d, 0, ex);
+    dyn_array_extract(d, 0, ex); // EXTRACTS FIRST POINTER
     
     
     //STORE THE NEW SIZE
-    s = ready_queue->size;
+    s = ready_queue->size; // STORES NEW SIZE OF DYNAMIC ARRAY
     
     
     //THIS SORTS ALL THE DATA IN ORDER OF BURST
-    for(int i=0; i < s-1; i++){
+    for(int i=0; i < s-1; i++){ // LOOP THROUGH ALL DATA
         
-        p1 = dyn_array_at(d, i);
-        p2 = dyn_array_at(d, i+1);
+        p1 = dyn_array_at(d, i); // FIRST POINTER
+        p2 = dyn_array_at(d, i+1); // SECOND POINTER
         
-        if(p1->remaining_burst_time > p2->remaining_burst_time){
-            dyn_array_extract(d, i+1, ex);
-            dyn_array_insert(d, i, ex);
+        if(p1->remaining_burst_time > p2->remaining_burst_time){ // IF FIRST POINTER'S BURST TIME IS GREATER THAN SECOND POINTER'S BURST TIME
+            dyn_array_extract(d, i+1, ex); // EXTRACT SECOND POINTER
+            dyn_array_insert(d, i, ex); // INSERT SECOND POINTER BEFORE FIRST POINTER
             
-            i = -1;
+            i = -1; // RESET LOOP
         }
         
     }
 
     
     //CPU SCHEDULES THE REST OF THE DATA
-    while(s != 0){
+    while(s != 0){ // LOOP UNTIL SIZE IS ZERO
         
         //PERFORMS THE NEXT CPU SCHEDULING BY BURST
-        for(int i=0; i < s; i++){
-            p = dyn_array_at(d, i);
+        for(int i=0; i < s; i++){ // LOOP THROUGH ALL DATA
+            p = dyn_array_at(d, i); // TRAVELING POINTER
             
-            if(p->arrival <= universal_timer){
+            if(p->arrival <= universal_timer){ // IF ARRIVAL TIME IS LESS THAN OR EQUAL TO UNIVERSAL TIMER
                 
-                waiting_time[p->ID] += universal_timer;
+                waiting_time[p->ID] += universal_timer; // ADDS UNIVERSAL TIMER TO WAITING TIME
                 
-                while(p->remaining_burst_time != 0){
-                    virtual_cpu(p);
-                    universal_timer++;
-                    burst_time[p->ID]++;
+                while(p->remaining_burst_time != 0){ // LOOP UNTIL BURST TIME IS ZERO
+                    virtual_cpu(p);  // PERFORMS VIRTUAL CPU
+                    universal_timer++; // INCREASES UNIVERSAL TIMER
+                    burst_time[p->ID]++; // INCREASES BURST TIME
                 }
                 
-                dyn_array_extract(d, i, ex);
+                dyn_array_extract(d, i, ex); // EXTRACTS TRAVELING POINTER
                 s = ready_queue->size;        //store the new size
                 
-                i = s;
-            }
+                i = s; // SETS LOOP TO END
+            } 
             
         }
     
@@ -293,22 +312,22 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
    
    
     //CALCULATE AVERAGE WAITING TIME
-    for(int i=0; i < s_initial; i++){
-        average_waiting_time += waiting_time[i];
+    for(int i=0; i < s_initial; i++){ // LOOP THROUGH ALL DATA
+        average_waiting_time += waiting_time[i]; // ADDS WAITING TIME TO AVERAGE WAITING TIME
     }
     
     
     //CALCULATE AVERAGE WAITING TIME
-    average_waiting_time /= s_initial;
+    average_waiting_time /= s_initial; // DIVIDES AVERAGE WAITING TIME BY SIZE OF DYNAMIC ARRAY
     
     
     //CREATE AVERAGE TURNAROUND TIME VARIABLE
-    float average_turnaround_time = 0;
+    float average_turnaround_time = 0; 
     
     
     //CALCULATE AVERAGE TURNAROUND TIME
-    for(int i=0; i < s_initial; i++){
-        average_turnaround_time += waiting_time[i]+burst_time[i];
+    for(int i=0; i < s_initial; i++){ // LOOP THROUGH ALL DATA
+        average_turnaround_time += waiting_time[i]+burst_time[i]; // ADDS WAITING TIME AND BURST TIME TO AVERAGE TURNAROUND TIME
     }
     
     //CALCULATE AVERAGE TURNAROUND TIME
@@ -322,12 +341,19 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
     
     
     
-    free(ex);
+    free(ex); // FREE EXTRACTION HOLDER
     
     
-    return true; 
+    return true; // RETURN TRUE
 }
 
+/*
+* priority
+* Runs the priority scheduling algorithm on the ready_queue.
+* @param ready_queue The queue of processes to run.
+* @param result The result of the scheduling algorithm.
+* @return true if the scheduling algorithm was run successfully, false otherwise.
+*/
 bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result) 
 {
     //ERROR CHECKING
@@ -336,43 +362,43 @@ bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result)
     }
     
     //MAKE CUSTOM VARIABLES
-    dyn_array_t *d = ready_queue;
-    int s = ready_queue->size;
-    int s_initial = ready_queue->size;
+    dyn_array_t *d = ready_queue; // DYNAMIC ARRAY
+    int s = ready_queue->size; // SIZE OF DYNAMIC ARRAY
+    int s_initial = ready_queue->size; // SIZE OF DYNAMIC ARRAY
     
     
     //TRAVELING POINTERS
-    ProcessControlBlock_t *p1;
-    ProcessControlBlock_t *p2;
+    ProcessControlBlock_t *p1; // FIRST POINTER
+    ProcessControlBlock_t *p2; // SECOND POINTER
     
     
     //TRAVELING POINTER
-    ProcessControlBlock_t *p;
+    ProcessControlBlock_t *p; 
     
     
     //EXTRACTION HOLDER
-    ProcessControlBlock_t *ex = malloc(sizeof(ProcessControlBlock_t));
+    ProcessControlBlock_t *ex = malloc(sizeof(ProcessControlBlock_t)); 
     
     
     //THIS SORTS ALL THE DATA IN ORDER OF ARRIVAL TIME, THEN PRIORITY
-    for(int i=0; i < s-1; i++){
+    for(int i=0; i < s-1; i++){ // LOOP THROUGH ALL DATA
         
-        p1 = dyn_array_at(d, i);
-        p2 = dyn_array_at(d, i+1);
+        p1 = dyn_array_at(d, i); // FIRST POINTER
+        p2 = dyn_array_at(d, i+1); // SECOND POINTER
         
-        if(p1->arrival > p2->arrival){
-            dyn_array_extract(d, i+1, ex);
-            dyn_array_insert(d, i, ex);
+        if(p1->arrival > p2->arrival){ // IF FIRST POINTER'S ARRIVAL TIME IS GREATER THAN SECOND POINTER'S ARRIVAL TIME
+            dyn_array_extract(d, i+1, ex); // EXTRACT SECOND POINTER
+            dyn_array_insert(d, i, ex); // INSERT SECOND POINTER BEFORE FIRST POINTER
             
-            i = -1;
-        }
-        else if(p1->arrival == p2->arrival){
+            i = -1; // RESET LOOP
+        } 
+        else if(p1->arrival == p2->arrival){ // IF FIRST POINTER'S ARRIVAL TIME IS EQUAL TO SECOND POINTER'S ARRIVAL TIME
             
-            if(p1->priority > p2->priority){
-                dyn_array_extract(d, i+1, ex);
-                dyn_array_insert(d, i, ex);
+            if(p1->priority > p2->priority){ // IF FIRST POINTER'S PRIORITY IS GREATER THAN SECOND POINTER'S PRIORITY
+                dyn_array_extract(d, i+1, ex); // EXTRACT SECOND POINTER
+                dyn_array_insert(d, i, ex); // INSERT SECOND POINTER BEFORE FIRST POINTER
                 
-                i = -1;
+                i = -1; // RESET LOOP
             }
             
         }
@@ -380,39 +406,39 @@ bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result)
     
     
     //SETS UP ALL ID NUMBERS
-    for(int i=0; i < s; i++){
-        p = dyn_array_at(d, i);
-        p->ID = i;
+    for(int i=0; i < s; i++){ // LOOP THROUGH ALL DATA
+        p = dyn_array_at(d, i); // TRAVELING POINTER
+        p->ID = i; // SETS ID NUMBER
     }
     
     
     //TIMER VARIABLES
-    float universal_timer = 0;
+    float universal_timer = 0; 
     float waiting_time[s];
     float burst_time[s];
     
     
     //SET ALL EQUAL TO ZERO
-    for(int i=0; i < s; i++){
-        waiting_time[i] = 0;
-        burst_time[i] = 0;
+    for(int i=0; i < s; i++){ // LOOP THROUGH ALL DATA
+        waiting_time[i] = 0; // SETS WAITING TIME TO ZERO
+        burst_time[i] = 0; // SETS BURST TIME TO ZERO
     }
     
     
     //SUBTRACTS ARRIVAL TIMES FROM WAITING TIMES
-    for(int i=0; i < s; i++){
-        p1 = dyn_array_at(d, i);
-        waiting_time[i] -= p1->arrival;
+    for(int i=0; i < s; i++){ // LOOP THROUGH ALL DATA
+        p1 = dyn_array_at(d, i); // TRAVELING POINTER
+        waiting_time[i] -= p1->arrival; // SUBTRACTS ARRIVAL TIME FROM WAITING TIME
     }
     
     
     //CPU SCHEDULES THE FIRST ONE (HAPPENS REGARDLESS)
     p = dyn_array_at(d, 0);
     
-    while(p->remaining_burst_time != 0){
-        virtual_cpu(p);
-        universal_timer++;
-        burst_time[p->ID]++;
+    while(p->remaining_burst_time != 0){ // LOOP UNTIL BURST TIME IS ZERO
+        virtual_cpu(p); // PERFORMS VIRTUAL CPU
+        universal_timer++; // INCREASES UNIVERSAL TIMER
+        burst_time[p->ID]++; // INCREASES BURST TIME
     }
     
     
@@ -425,42 +451,42 @@ bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result)
     
     
     //THIS SORTS ALL THE DATA IN ORDER OF PRIORITY
-    for(int i=0; i < s-1; i++){
+    for(int i=0; i < s-1; i++){ // LOOP THROUGH ALL DATA
         
-        p1 = dyn_array_at(d, i);
-        p2 = dyn_array_at(d, i+1);
+        p1 = dyn_array_at(d, i); // FIRST POINTER
+        p2 = dyn_array_at(d, i+1); // SECOND POINTER
         
-        if(p1->priority > p2->priority){
-            dyn_array_extract(d, i+1, ex);
-            dyn_array_insert(d, i, ex);
+        if(p1->priority > p2->priority){ // IF FIRST POINTER'S PRIORITY IS GREATER THAN SECOND POINTER'S PRIORITY
+            dyn_array_extract(d, i+1, ex); // EXTRACT SECOND POINTER
+            dyn_array_insert(d, i, ex); // INSERT SECOND POINTER BEFORE FIRST POINTER
             
-            i = -1;
+            i = -1; // RESET LOOP
         }
         
     }
 
     
     //CPU SCHEDULES THE REST OF THE DATA
-    while(s != 0){
+    while(s != 0){ // LOOP UNTIL SIZE IS ZERO
         
         //PERFORMS THE NEXT CPU SCHEDULING BY PRIORITY
-        for(int i=0; i < s; i++){
-            p = dyn_array_at(d, i);
+        for(int i=0; i < s; i++){ // LOOP THROUGH ALL DATA
+            p = dyn_array_at(d, i); // TRAVELING POINTER
             
-            if(p->arrival <= universal_timer){
+            if(p->arrival <= universal_timer){ // IF ARRIVAL TIME IS LESS THAN OR EQUAL TO UNIVERSAL TIMER
                 
-                waiting_time[p->ID] += universal_timer;
-                
-                while(p->remaining_burst_time != 0){
-                    virtual_cpu(p);
-                    universal_timer++;
-                    burst_time[p->ID]++;
+                waiting_time[p->ID] += universal_timer; // ADDS UNIVERSAL TIMER TO WAITING TIME
+                 
+                while(p->remaining_burst_time != 0){ // LOOP UNTIL BURST TIME IS ZERO
+                    virtual_cpu(p); // PERFORMS VIRTUAL CPU
+                    universal_timer++; // INCREASES UNIVERSAL TIMER
+                    burst_time[p->ID]++; // INCREASES BURST TIME
                 }
                 
-                dyn_array_extract(d, i, ex);
+                dyn_array_extract(d, i, ex); // EXTRACTS TRAVELING POINTER
                 s = ready_queue->size;        //store the new size
                 
-                i = s;
+                i = s; // SETS LOOP TO END
             }
             
         }
@@ -473,8 +499,8 @@ bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result)
    
    
     //CALCULATE AVERAGE WAITING TIME
-    for(int i=0; i < s_initial; i++){
-        average_waiting_time += waiting_time[i];
+    for(int i=0; i < s_initial; i++){ // LOOP THROUGH ALL DATA
+        average_waiting_time += waiting_time[i]; // ADDS WAITING TIME TO AVERAGE WAITING TIME
     }
     
     
@@ -487,12 +513,12 @@ bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result)
     
     
     //CALCULATE AVERAGE TURNAROUND TIME
-    for(int i=0; i < s_initial; i++){
-        average_turnaround_time += waiting_time[i]+burst_time[i];
+    for(int i=0; i < s_initial; i++){ // LOOP THROUGH ALL DATA
+        average_turnaround_time += waiting_time[i]+burst_time[i]; // ADDS WAITING TIME AND BURST TIME TO AVERAGE TURNAROUND TIME
     }
     
     //CALCULATE AVERAGE TURNAROUND TIME
-    average_turnaround_time /= s_initial;
+    average_turnaround_time /= s_initial; 
     
     
     //STORE ALL THE RESULTS
@@ -501,12 +527,20 @@ bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result)
     result->total_run_time = universal_timer; 
     
     
-    free(ex);
+    free(ex); // FREE EXTRACTION HOLDER
     
     
-    return true; 
+    return true; // RETURN TRUE
 }
 
+/*
+* round_robin
+* Runs the round robin scheduling algorithm on the ready_queue
+* @param ready_queue The queue of processes to run
+* @param result The result of the scheduling algorithm
+* @param quantum The quantum to use for the algorithm
+* @return true if the algorithm was run successfully, false otherwise
+*/
 bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quantum) 
 {
     //ERROR CHECKING
@@ -515,31 +549,31 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
     }
     
     //MAKE CUSTOM VARIABLES
-    dyn_array_t *d = ready_queue;
-    int s = ready_queue->size;
-    int q = quantum;
+    dyn_array_t *d = ready_queue; // DYNAMIC ARRAY
+    int s = ready_queue->size; // SIZE
+    int q = quantum; // QUANTUM 
     
     
     //TRAVELING POINTERS
-    ProcessControlBlock_t *p1;
-    ProcessControlBlock_t *p2;
+    ProcessControlBlock_t *p1; 
+    ProcessControlBlock_t *p2; 
     
     
     //EXTRACTION HOLDER
-    ProcessControlBlock_t *ex = malloc(sizeof(ProcessControlBlock_t));
+    ProcessControlBlock_t *ex = malloc(sizeof(ProcessControlBlock_t)); 
     
     
     //THIS SORTS ALL THE DATA IN ORDER OF ARRIVAL TIME
-    for(int i=0; i < s-1; i++){
+    for(int i=0; i < s-1; i++){ // LOOP THROUGH ALL DATA
         
-        p1 = dyn_array_at(d, i);
-        p2 = dyn_array_at(d, i+1);
+        p1 = dyn_array_at(d, i); // FIRST POINTER
+        p2 = dyn_array_at(d, i+1); // SECOND POINTER
         
-        if(p1->arrival > p2->arrival){
-            dyn_array_extract(d, i+1, ex);
-            dyn_array_insert(d, i, ex);
+        if(p1->arrival > p2->arrival){ // IF FIRST POINTER'S ARRIVAL TIME IS GREATER THAN SECOND POINTER'S ARRIVAL TIME
+            dyn_array_extract(d, i+1, ex); // EXTRACT SECOND POINTER
+            dyn_array_insert(d, i, ex); // INSERT SECOND POINTER BEFORE FIRST POINTER
             
-            i = -1;
+            i = -1; // RESET LOOP
         }
     }
     
@@ -552,9 +586,9 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
     
     
     //SET ALL EQUAL TO ZERO
-    for(int i=0; i < s; i++){
-        waiting_time[i] = 0;
-        burst_time[i] = 0;
+    for(int i=0; i < s; i++){ // LOOP THROUGH ALL DATA
+        waiting_time[i] = 0; // SET WAITING TIME TO ZERO
+        burst_time[i] = 0; // SET BURST TIME TO ZERO
     }
     
     
@@ -570,42 +604,42 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
     //CPU SCHEDULES ALL OF THE DATA
     //this for loop walks through every pcb in the array one at a time
     //if all the pcb's "remaining burst" times are zero, the loop will stop
-    for(int i=0; i < s; i++){
+    for(int i=0; i < s; i++){ // LOOP THROUGH ALL DATA
         
-        p = dyn_array_at(d, i);
+        p = dyn_array_at(d, i); // TRAVELING POINTER
         
-        if(p->remaining_burst_time == 0){
-            t++;
+        if(p->remaining_burst_time == 0){ // IF BURST TIME IS ZERO
+            t++; // INCREASES T
         }
-        else{
+        else{ // IF BURST TIME IS NOT ZERO
             
             t = 0;
             counter = 0;
             burst_timer = 0;
             
-            while(counter < q && p->remaining_burst_time != 0){
-                virtual_cpu(p);
-                counter++;
-                universal_timer++;
-                burst_timer++;
+            while(counter < q && p->remaining_burst_time != 0){ // LOOP UNTIL COUNTER IS GREATER THAN QUANTUM OR BURST TIME IS ZERO
+                virtual_cpu(p); // PERFORMS VIRTUAL CPU
+                counter++; // INCREASES COUNTER
+                universal_timer++; // INCREASES UNIVERSAL TIMER
+                burst_timer++; // INCREASES BURST TIMER
             }
             
-            for(int j=0; j<s; j++){
-                p2 = dyn_array_at(d, j);
+            for(int j=0; j<s; j++){ // LOOP THROUGH ALL DATA
+                p2 = dyn_array_at(d, j); // TRAVELING POINTER
                 
                 if(j != i && p2->remaining_burst_time != 0){
                     waiting_time[j] += counter;     // this increments all of the 
                 }                                   // pcb's in the ready queue
             }
             
-            burst_time[i] += burst_timer;
+            burst_time[i] += burst_timer; // INCREASES BURST TIME
             
         }
         
         
         if(i == s-1){  // this makes the for loop go forever
-            i = -1;
-        }
+            i = -1; 
+        } 
         
         
         if(t == s){    // this stops the loop
@@ -616,9 +650,9 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
     
     
     //SUBTRACTS ARRIVAL TIMES FROM WAITING TIMES
-    for(int i=0; i < s; i++){
-        p1 = dyn_array_at(d, i);
-        waiting_time[i] -= p1->arrival;
+    for(int i=0; i < s; i++){ // LOOP THROUGH ALL DATA
+        p1 = dyn_array_at(d, i); // TRAVELING POINTER
+        waiting_time[i] -= p1->arrival; // SUBTRACTS ARRIVAL TIME FROM WAITING TIME
     }
     
     
@@ -655,11 +689,17 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
     result->total_run_time = universal_timer; 
     
     
-    free(ex);
-    
-    return true; 
+    free(ex); // FREE EXTRACTION HOLDER
+     
+    return true;  // RETURN TRUE
 }
 
+/*
+* load_process_control_blocks
+* Loads the process control blocks from the input file
+* @param input_file The file to load the process control blocks from
+* @return The array of process control blocks
+*/
 dyn_array_t *load_process_control_blocks(const char *input_file) 
 {
     //ERROR CHECKING
@@ -707,14 +747,14 @@ dyn_array_t *load_process_control_blocks(const char *input_file)
     //SETS ALL DATA TO THE DYN ARRAY
     for(int i=0; i<(int)first_data[0]; i++){
         
-        ProcessControlBlock_t *p = malloc(sizeof(ProcessControlBlock_t));
+        ProcessControlBlock_t *p = malloc(sizeof(ProcessControlBlock_t)); // ALLOCATES MEMORY FOR PCB
     
-        p->remaining_burst_time = data[t]; t++;
-        p->priority = data[t]; t++;
-        p->arrival = data[t]; t++;
-        p->started = false;
+        p->remaining_burst_time = data[t]; t++; // SETS THE REMAINING BURST TIME
+        p->priority = data[t]; t++; // SETS THE PRIORITY
+        p->arrival = data[t]; t++;  // SETS THE ARRIVAL TIME
+        p->started = false; // SETS THE STARTED VARIABLE TO FALSE
         
-        dyn_array_push_back(d, p);
+        dyn_array_push_back(d, p); // PUSHES THE PCB TO THE DYN ARRAY
         
     }
     
@@ -723,14 +763,20 @@ dyn_array_t *load_process_control_blocks(const char *input_file)
     fclose(fp);
     
     
-    free(first_data);
-    free(data);
+    free(first_data); // FREE FIRST DATA
+    free(data); // FREE DATA
     
     
     //RETURN THE DYN_ARRAY
     return d;
 }
-
+/*
+* shortest_remaining_time_first
+* Runs the shortest remaining time first scheduling algorithm
+* @param ready_queue The array of process control blocks
+* @param result The structure to store the results in
+* @return true if the scheduling was successful, false otherwise
+*/
 bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *result) 
 {
     //ERROR CHECKING
@@ -740,13 +786,13 @@ bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *r
     
     
     //MAKE CUSTOM VARIABLES
-    dyn_array_t *d = ready_queue;
-    int s = ready_queue->size;
+    dyn_array_t *d = ready_queue; // DYN ARRAY
+    int s = ready_queue->size; // SIZE OF DYN ARRAY
     
     
     //TRAVELING POINTERS
-    ProcessControlBlock_t *p1;
-    ProcessControlBlock_t *p2;
+    ProcessControlBlock_t *p1; // TRAVELING POINTER 1
+    ProcessControlBlock_t *p2; // TRAVELING POINTER 2
     
     
     //EXTRACTION HOLDER
@@ -754,24 +800,24 @@ bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *r
     
     
     //THIS SORTS ALL THE DATA IN ORDER OF ARRIVAL TIME
-    for(int i=0; i < s-1; i++){
+    for(int i=0; i < s-1; i++){ // LOOP THROUGH ALL DATA
         
-        p1 = dyn_array_at(d, i);
-        p2 = dyn_array_at(d, i+1);
+        p1 = dyn_array_at(d, i); // TRAVELING POINTER 1
+        p2 = dyn_array_at(d, i+1); // TRAVELING POINTER 2
         
-        if(p1->arrival > p2->arrival){
-            dyn_array_extract(d, i+1, ex);
-            dyn_array_insert(d, i, ex);
+        if(p1->arrival > p2->arrival){ // IF THE ARRIVAL TIME OF P1 IS GREATER THAN P2
+            dyn_array_extract(d, i+1, ex); // EXTRACT P2
+            dyn_array_insert(d, i, ex); // INSERT P2 BEFORE P1
             
-            i = -1;
+            i = -1; // RESET THE LOOP
         }
-        else if(p1->arrival == p2->arrival){
+        else if(p1->arrival == p2->arrival){ // IF THE ARRIVAL TIME OF P1 IS EQUAL TO P2
             
-            if(p1->remaining_burst_time > p2->remaining_burst_time){
-                dyn_array_extract(d, i+1, ex);
-                dyn_array_insert(d, i, ex);
+            if(p1->remaining_burst_time > p2->remaining_burst_time){ // IF THE REMAINING BURST TIME OF P1 IS GREATER THAN P2
+                dyn_array_extract(d, i+1, ex); // EXTRACT P2
+                dyn_array_insert(d, i, ex); // INSERT P2 BEFORE P1
                 
-                i = -1;
+                i = -1; // RESET THE LOOP
             }
             
         }
@@ -779,94 +825,94 @@ bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *r
     
     
     //SETS UP ALL ID NUMBERS
-    for(int i=0; i < s; i++){
-        p1 = dyn_array_at(d, i);
-        p1->ID = i;
+    for(int i=0; i < s; i++){ // LOOP THROUGH ALL DATA
+        p1 = dyn_array_at(d, i); // TRAVELING POINTER 1
+        p1->ID = i; // SETS THE ID NUMBER
     }
     
     
     //FINDS THE LATEST ARRIVAL TIME
-    p1 = dyn_array_at(d, s-1);
-    uint32_t latest_arrival = p1->arrival;
+    p1 = dyn_array_at(d, s-1); // TRAVELING POINTER 1
+    uint32_t latest_arrival = p1->arrival; // SETS THE LATEST ARRIVAL TIME
     
     
     //TIMER VARIABLES
-    float universal_timer = latest_arrival;
-    float burst_timer = 0;
-    float waiting_timer = 0;
-    float waiting_time[s];
-    float burst_time[s];
+    float universal_timer = latest_arrival; // SETS THE UNIVERSAL TIMER TO THE LATEST ARRIVAL TIME
+    float burst_timer = 0; // SETS THE BURST TIMER TO ZERO
+    float waiting_timer = 0; // SETS THE WAITING TIMER TO ZERO
+    float waiting_time[s]; // SETS UP THE WAITING TIME ARRAY
+    float burst_time[s]; // SETS UP THE BURST TIME ARRAY
     
     
     //SET ALL EQUAL TO ZERO
-    for(int i=0; i < s; i++){
-        waiting_time[i] = 0;
-        burst_time[i] = 0;
+    for(int i=0; i < s; i++){ // LOOP THROUGH ALL DATA
+        waiting_time[i] = 0; // SETS ALL WAITING TIME TO ZERO
+        burst_time[i] = 0; // SETS ALL BURST TIME TO ZERO
     }
     
     
     //THIS SORTS ALL THE DATA IN ORDER OF SHORTEST BURST TIME
-    for(int i=0; i < s-1; i++){
+    for(int i=0; i < s-1; i++){ // LOOP THROUGH ALL DATA
         
-        p1 = dyn_array_at(d, i);
-        p2 = dyn_array_at(d, i+1);
+        p1 = dyn_array_at(d, i); // TRAVELING POINTER 1
+        p2 = dyn_array_at(d, i+1); // TRAVELING POINTER 2
         
-        if((p1->remaining_burst_time - p1->arrival) > p2->remaining_burst_time){
-            dyn_array_extract(d, i+1, ex);
-            dyn_array_insert(d, i, ex);
+        if((p1->remaining_burst_time - p1->arrival) > p2->remaining_burst_time){ // IF THE REMAINING BURST TIME OF P1 IS GREATER THAN P2
+            dyn_array_extract(d, i+1, ex); // EXTRACT P2
+            dyn_array_insert(d, i, ex); // INSERT P2 BEFORE P1
             
-            i = -1;
-        }
+            i = -1; // RESET THE LOOP
+        } 
         
     }
     
     
     //PROCESSES THE SHORTEST JOB, LASTING UNTIL THE LATEST ARRIVAL TIME
-    p1 = dyn_array_at(d, 0);
+    p1 = dyn_array_at(d, 0); // TRAVELING POINTER 1
     
-    for(int i=0; i < (int)(latest_arrival - p1->arrival); i++){
-        virtual_cpu(p1);
-        burst_time[p1->ID]++;
-        waiting_timer++;
+    for(int i=0; i < (int)(latest_arrival - p1->arrival); i++){ // LOOP THROUGH ALL DATA
+        virtual_cpu(p1); // RUNS THE VIRTUAL CPU
+        burst_time[p1->ID]++;   // INCREMENTS THE BURST TIME
+        waiting_timer++; // INCREMENTS THE WAITING TIMER
     }
     
     
     //THIS CPU SCHEDULES ALL OF THE DATA UP UNTIL THE LAST ONE ARRIVES
-    for(int i=1; i < s; i++){
+    for(int i=1; i < s; i++){ // LOOP THROUGH ALL DATA
         
-        p2 = dyn_array_at(d, i);
+        p2 = dyn_array_at(d, i); // TRAVELING POINTER 2
         
-        if(p2->arrival < p1->arrival){
+        if(p2->arrival < p1->arrival){ // IF THE ARRIVAL TIME OF P2 IS LESS THAN P1
             
-            for(int j=0; j < (int)(p1->arrival - p2->arrival); j++){
-                virtual_cpu(p2);
-                burst_time[p2->ID]++;
+            for(int j=0; j < (int)(p1->arrival - p2->arrival); j++){ // LOOP THROUGH ALL DATA
+                virtual_cpu(p2); // RUNS THE VIRTUAL CPU
+                burst_time[p2->ID]++; // INCREMENTS THE BURST TIME
             }
             
-            waiting_time[p2->ID] = latest_arrival - p1->arrival;
+            waiting_time[p2->ID] = latest_arrival - p1->arrival; // SETS THE WAITING TIME
             
-            p1 = p2;
+            p1 = p2; // SETS P1 TO P2
         
         }
-        else{
+        else{ // IF THE ARRIVAL TIME OF P2 IS GREATER THAN P1
             
-            waiting_time[p2->ID] = latest_arrival - p2->arrival;
+            waiting_time[p2->ID] = latest_arrival - p2->arrival; // SETS THE WAITING TIME
             
         }
     }
     
     
     //THIS SORTS ALL THE DATA IN ORDER OF BURST TIME
-    for(int i=0; i < s-1; i++){
+    for(int i=0; i < s-1; i++){ // LOOP THROUGH ALL DATA
         
-        p1 = dyn_array_at(d, i);
-        p2 = dyn_array_at(d, i+1);
+        p1 = dyn_array_at(d, i); // TRAVELING POINTER 1 
+        p2 = dyn_array_at(d, i+1); // TRAVELING POINTER 2
         
-        if(p1->remaining_burst_time > p2->remaining_burst_time){
-            dyn_array_extract(d, i+1, ex);
-            dyn_array_insert(d, i, ex);
+        if(p1->remaining_burst_time > p2->remaining_burst_time){ // IF THE REMAINING BURST TIME OF P1 IS GREATER THAN P2
+            dyn_array_extract(d, i+1, ex); // EXTRACT P2
+            dyn_array_insert(d, i, ex); // INSERT P2 BEFORE P1
             
-            i = -1;
+            i = -1; // RESET THE LOOP
         }
     }
     
@@ -874,28 +920,28 @@ bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *r
     //PERFORMS CPU SCHEDULING FOR ALL DATA
     //this picks up where the last function stopped
     //this performs scheduling on the rest of the data SJF
-    for(int i=0; i < s; i++){
+    for(int i=0; i < s; i++){ // LOOP THROUGH ALL DATA
+         
+        p1 = dyn_array_at(d, i); // TRAVELING POINTER 1
         
-        p1 = dyn_array_at(d, i);
+        burst_timer = 0; // SETS THE BURST TIMER TO ZERO
         
-        burst_timer = 0;
-        
-        while(p1->remaining_burst_time != 0){
-            virtual_cpu(p1);
-            universal_timer++;
-            burst_timer++;
+        while(p1->remaining_burst_time != 0){ // WHILE THE REMAINING BURST TIME IS NOT ZERO
+            virtual_cpu(p1); // RUNS THE VIRTUAL CPU
+            universal_timer++; // INCREMENTS THE UNIVERSAL TIMER
+            burst_timer++; // INCREMENTS THE BURST TIMER
         }
         
         
-        for(int j=0; j<s; j++){
-            p2 = dyn_array_at(d, j);
+        for(int j=0; j<s; j++){ // LOOP THROUGH ALL DATA
+            p2 = dyn_array_at(d, j); // TRAVELING POINTER 2
             
-            if(j != i && p2->remaining_burst_time != 0){
+            if(j != i && p2->remaining_burst_time != 0){ // IF THE ID OF P2 IS NOT THE SAME AS P1 AND THE REMAINING BURST TIME IS NOT ZERO
                 waiting_time[j] += burst_timer;     // this increments all of the 
             }                                   // pcb's in the ready queue
         }
         
-        burst_time[i] += burst_timer;
+        burst_time[i] += burst_timer; // INCREMENTS THE BURST TIME
     }
     
     
@@ -905,7 +951,7 @@ bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *r
    
     //CALCULATE AVERAGE WAITING TIME
     for(int i=0; i < s; i++){
-        average_waiting_time += waiting_time[i];
+        average_waiting_time += waiting_time[i]; // ADDS ALL THE WAITING TIME
     }
     
     
@@ -919,7 +965,7 @@ bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *r
     
     //CALCULATE AVERAGE TURNAROUND TIME
     for(int i=0; i < s; i++){
-        average_turnaround_time += waiting_time[i]+burst_time[i];
+        average_turnaround_time += waiting_time[i]+burst_time[i]; // ADDS THE WAITING TIME AND BURST TIME
     }
     
     //CALCULATE AVERAGE TURNAROUND TIME
@@ -932,8 +978,8 @@ bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *r
     result->total_run_time = universal_timer; 
     
     
-    free(ex);
+    free(ex); // FREE THE EXTRACTED DATA
     
     
-    return true;
+    return true; // RETURN TRUE
 }
