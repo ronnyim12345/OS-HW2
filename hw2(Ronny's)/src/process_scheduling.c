@@ -643,7 +643,7 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
         
         
         if(t == s){    // this stops the loop
-            i = s;
+            i = s-1;
         }
         
     }
@@ -837,9 +837,8 @@ bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *r
     
     
     //TIMER VARIABLES
-    float universal_timer = latest_arrival; // SETS THE UNIVERSAL TIMER TO THE LATEST ARRIVAL TIME
+    float universal_timer = 0;
     float burst_timer = 0; // SETS THE BURST TIMER TO ZERO
-    float waiting_timer = 0; // SETS THE WAITING TIMER TO ZERO
     float waiting_time[s]; // SETS UP THE WAITING TIME ARRAY
     float burst_time[s]; // SETS UP THE BURST TIME ARRAY
     
@@ -851,53 +850,59 @@ bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *r
     }
     
     
-    //THIS SORTS ALL THE DATA IN ORDER OF SHORTEST BURST TIME
-    for(int i=0; i < s-1; i++){ // LOOP THROUGH ALL DATA
-        
-        p1 = dyn_array_at(d, i); // TRAVELING POINTER 1
-        p2 = dyn_array_at(d, i+1); // TRAVELING POINTER 2
-        
-        if((p1->remaining_burst_time - p1->arrival) > p2->remaining_burst_time){ // IF THE REMAINING BURST TIME OF P1 IS GREATER THAN P2
-            dyn_array_extract(d, i+1, ex); // EXTRACT P2
-            dyn_array_insert(d, i, ex); // INSERT P2 BEFORE P1
-            
-            i = -1; // RESET THE LOOP
-        } 
-        
+    //CREATES AN ARRIVALS BOOLEAN ARRAY
+    bool all_arrivals[latest_arrival];
+    
+    
+    //SETS THEM ALL TO FALSE
+    for(int i=0; i < (int)latest_arrival; i++){
+        all_arrivals[i] = false;
     }
     
     
-    //PROCESSES THE SHORTEST JOB, LASTING UNTIL THE LATEST ARRIVAL TIME
-    p1 = dyn_array_at(d, 0); // TRAVELING POINTER 1
-    
-    for(int i=0; i < (int)(latest_arrival - p1->arrival); i++){ // LOOP THROUGH ALL DATA
-        virtual_cpu(p1); // RUNS THE VIRTUAL CPU
-        burst_time[p1->ID]++;   // INCREMENTS THE BURST TIME
-        waiting_timer++; // INCREMENTS THE WAITING TIMER
+    //MARKS WHEN EACH PCB ARRIVES IN THE ARRAY
+    for(int i=0; i < s-1; i++){
+        p1 = dyn_array_at(d, i);
+        all_arrivals[p1->arrival] = true;
     }
     
     
-    //THIS CPU SCHEDULES ALL OF THE DATA UP UNTIL THE LAST ONE ARRIVES
-    for(int i=1; i < s; i++){ // LOOP THROUGH ALL DATA
+    //SETS UP FOR THE FIRST ONE
+    p1 = dyn_array_at(d, 0);
+    
+    
+    //THIS PROCESSES ALL OF THE DATA UNTIL THE LAST DATA ARRIVES
+    for(int i=0; i < (int)latest_arrival; i++){
         
-        p2 = dyn_array_at(d, i); // TRAVELING POINTER 2
+        //CPU PROCESSES P1
+        virtual_cpu(p1); 
+        universal_timer++; 
+        burst_time[p1->ID]++; 
         
-        if(p2->arrival < p1->arrival){ // IF THE ARRIVAL TIME OF P2 IS LESS THAN P1
+        
+        //INCREMENTS WAIT TIME FOR THE REST OF THEM
+        for(int j=0; j<s; j++){ 
+            p2 = dyn_array_at(d, j); 
             
-            for(int j=0; j < (int)(p1->arrival - p2->arrival); j++){ // LOOP THROUGH ALL DATA
-                virtual_cpu(p2); // RUNS THE VIRTUAL CPU
-                burst_time[p2->ID]++; // INCREMENTS THE BURST TIME
+            if(j != i){
+                waiting_time[j]++;
+            }
+        }
+        
+        
+        //DOES THIS IF A NEW DATA ARRIVES & SWITCHES TO THE NEW DATA IF IT IS SHORTER)
+        if(all_arrivals[i+1] == true){
+            
+            p2 = dyn_array_at(d, (p1->ID)+1);
+            
+            while((int)p2->arrival != i+1){
+                p2 = dyn_array_at(d, (p2->ID)+1);
+                
             }
             
-            waiting_time[p2->ID] = latest_arrival - p1->arrival; // SETS THE WAITING TIME
-            
-            p1 = p2; // SETS P1 TO P2
-        
-        }
-        else{ // IF THE ARRIVAL TIME OF P2 IS GREATER THAN P1
-            
-            waiting_time[p2->ID] = latest_arrival - p2->arrival; // SETS THE WAITING TIME
-            
+            if(p2->remaining_burst_time < p1->remaining_burst_time){
+                p1 = p2;
+            }
         }
     }
     
@@ -942,6 +947,13 @@ bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *r
         }
         
         burst_time[i] += burst_timer; // INCREMENTS THE BURST TIME
+    }
+    
+    
+    //SUBTRACTS ARRIVAL TIMES FROM WAITING TIMES
+    for(int i=0; i < s; i++){ // LOOP THROUGH ALL DATA
+        p1 = dyn_array_at(d, i); // TRAVELING POINTER
+        waiting_time[i] -= p1->arrival; // SUBTRACTS ARRIVAL TIME FROM WAITING TIME
     }
     
     
